@@ -1,0 +1,28 @@
+# Arquivos de ambiente contendo segredos
+token.env
+
+# Arquivos de cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Arquivos de log
+*.log
+
+# Diretórios de ambiente virtual
+.venv
+venv/
+ENV/
+
+# Pastas de ambiente de desenvolvimento
+.idx/
+
+# Pacotes pip locais
+.pip_packages/
+
+# Assets (se tiver imagens/fontos que não quiser subir)
+# assets/
+
+# Arquivos temporários
+*.tmp
+*.swp
