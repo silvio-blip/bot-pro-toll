@@ -86,7 +86,7 @@ class MyBot(commands.Bot):
             'cogs.loja.shop_manager',
             'cogs.loja.shop_user',
             'cogs.loja.inventario_command',
-            'cogs.utilidades',
+            'cogs.utilidades',  # Temporariamente desativado - requer libstdc++6
             'cogs.embed_command',
             'cogs.ia.agent_ia'
         ]

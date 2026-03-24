@@ -1,37 +1,42 @@
 # --- Core do Bot ---
 discord.py
 python-dotenv
+aiohttp
 
-# --- Banco de Dados (Versão estável sem PyIceberg) ---
+# --- Banco de Dados (Supabase/Postgres) ---
 supabase<2.10.0
 gotrue<3.0.0
 postgrest<0.18.0
 storage3<0.9.0
 supafunc<0.7.0
 
-# --- Dependências de Conexão e Segurança ---
-websockets<16
-pyjwt
+# --- Processamento de Imagem (Ajuste de Conflitos) ---
+numpy==1.26.4
+Pillow
+rembg==2.0.50
+onnxruntime==1.16.0
+opencv-python-headless==4.10.0.84
+
+# --- IA e Suporte ---
+google-generativeai
+
+# --- Segurança e Criptografia ---
+bcrypt
+PyNaCl
 cryptography
+pyjwt
+
+# --- Dependências de Conexão e Tipagem ---
+websockets<16
 strenum
 anyio
 httpcore
 h11
 h2
 sniffio
-
-# --- Tipagem e Validação ---
 pydantic
 pydantic-core
 annotated-types
 typing-extensions
-typing-inspection
-deprecation
 
-# --- Remoção de Fundo (Leve para PC fraco) ---
-rembg[cpu]
-onnxruntime
-
-
-
-#.\venv\Scripts\activate
+#pip install -r requirements.txt
