@@ -1,32 +1,32 @@
-# --- Core do Bot ---
+discord
 discord.py
 python-dotenv
 aiohttp
 
-# --- Banco de Dados (Supabase/Postgres) ---
+# Supabase
 supabase<2.10.0
 gotrue<3.0.0
 postgrest<0.18.0
 storage3<0.9.0
 supafunc<0.7.0
 
-# --- Processamento de Imagem (Ajuste de Conflitos) ---
+# IA & Imagem
 numpy==1.26.4
 Pillow
 rembg==2.0.50
 onnxruntime==1.16.0
-opencv-python-headless==4.10.0.84
+opencv-python-headless==4.9.0.80
 
-# --- IA e Suporte ---
+# Google
 google-generativeai
 
-# --- Segurança e Criptografia ---
+# Criptografia
 bcrypt
 PyNaCl
 cryptography
 pyjwt
 
-# --- Dependências de Conexão e Tipagem ---
+# Async & Web
 websockets<16
 strenum
 anyio
@@ -38,5 +38,3 @@ pydantic
 pydantic-core
 annotated-types
 typing-extensions
-
-#pip install -r requirements.txt
