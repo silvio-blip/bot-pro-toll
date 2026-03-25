@@ -61,24 +61,32 @@ logging.getLogger('asyncio').setLevel(logging.ERROR)
 
 # --- Carregamento das Variáveis de Ambiente ---
 try:
-    logging.info("Lendo o arquivo token.env para carregar as variáveis...")
-    if not os.path.exists("token.env"):
-        raise FileNotFoundError("O arquivo 'token.env' não foi encontrado. Certifique-se de que ele existe e está configurado.")
-        
-    with open("token.env", "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith('#') and '=' in line:
-                key, value = line.split('=', 1)
-                value = value.strip().strip('\'"')
-                os.environ[key.strip()] = value
-
+    # Primeiro, verifica se as variáveis já estão no ambiente (Railway/Vercel)
     DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
     SUPABASE_URL = os.getenv("SUPABASE_URL")
-    SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
+    
+    # Se não estiverem, tenta carregar do arquivo token.env (desenvolvimento local)
+    if not all([DISCORD_TOKEN, SUPABASE_URL, SUPABASE_KEY]):
+        logging.info("Variáveis de ambiente não encontradas. Tentando carregar do arquivo token.env...")
+        
+        if os.path.exists("token.env"):
+            with open("token.env", "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        value = value.strip().strip('\'"')
+                        os.environ[key.strip()] = value
+            
+            DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+            SUPABASE_URL = os.getenv("SUPABASE_URL")
+            SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
+        else:
+            raise FileNotFoundError("Arquivo 'token.env' não encontrado e variáveis de ambiente não definidas.")
 
     if not all([DISCORD_TOKEN, SUPABASE_URL, SUPABASE_KEY]):
-        raise ValueError("Uma ou mais variáveis de ambiente essenciais (DISCORD_TOKEN, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) não foram encontradas no arquivo token.env.")
+        raise ValueError("Uma ou mais variáveis de ambiente essenciais (DISCORD_TOKEN, SUPABASE_URL, SUPABASE_KEY) não foram encontradas.")
 
 except Exception as e:
     logging.error(f"Erro crítico ao carregar o ambiente: {e}")
