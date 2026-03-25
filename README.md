@@ -22,7 +22,7 @@ Um bot completo para Discord com sistema de moderação, gamificação, loja, IA
 
 <table>
 <tr>
-<td width="33%">
+<td width="50%">
 
 ### 🛠️ Administrativos
 | Comando | Descrição |
@@ -31,8 +31,15 @@ Um bot completo para Discord com sistema de moderação, gamificação, loja, IA
 | `/registrar` | Registrar o servidor |
 | `/sync` | Sincronizar comandos |
 
+### 🔧 Moderação
+| Comando | Descrição |
+|---------|-----------|
+| `/warn` | Advertir membro |
+| `/limpar` | Apagar mensagens |
+| `/lock` | Bloquear canal |
+
 </td>
-<td width="33%">
+<td width="50%">
 
 ### 🎮 Comandos Gerais
 | Comando | Descrição |
@@ -45,16 +52,6 @@ Um bot completo para Discord com sistema de moderação, gamificação, loja, IA
 | `/dado` | Rolar um dado |
 | `/enquete` | Criar enquete |
 | `/ping` | Ver latência |
-
-</td>
-<td width="33%">
-
-### 🔧 Moderação
-| Comando | Descrição |
-|---------|-----------|
-| `/warn` | Advertir membro |
-| `/limpar` | Apagar mensagens |
-| `/lock` | Bloquear canal |
 
 </td>
 </tr>
