@@ -18,21 +18,6 @@ Um bot completo para Discord com sistema de moderação, gamificação, loja, IA
 
 ---
 
-## 🚀 Começando
-
-### 1. Convide o bot ao seu servidor
-
-### 2. Configure as variáveis de ambiente
-```
-DISCORD_TOKEN=seu_token
-SUPABASE_URL=sua_url
-SUPABASE_KEY=sua_chave
-```
-
-### 3. Use os comandos
-
----
-
 ## 📝 Comandos
 
 ### 🛠️ Administrativos
