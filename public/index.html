@@ -3,189 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tool - Bot Discord</title>
+    <title>Tool - O Bot Discord Mais Completo</title>
+    <meta name="description" content="Gerencie seu servidor Discord com Tool: moderação, música, níveis, bem-vindas e muito mais!">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #5865F2;
+            --primary-dark: #4752C4;
+            --secondary: #EB459E;
+            --accent: #FEE75C;
+            --success: #57F287;
+            --dark: #23272A;
+            --darker: #1a1b1e;
+            --darkest: #0e0e10;
+            --text: #FFFFFF;
+            --text-muted: #B9BBBE;
+            --bg-gradient: linear-gradient(135deg, #1a1b1e 0%, #0e0e10 100%);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        :root {
-            --primary: #5865F2;
-            --secondary: #EB459E;
-            --accent: #FEE75C;
-            --dark: #0f0f23;
-            --darker: #0a0a1a;
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --text: #ffffff;
-            --text-muted: #b9bbbe;
-        }
-
         body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--darker);
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
             color: var(--text);
-            min-height: 100vh;
+            line-height: 1.6;
             overflow-x: hidden;
         }
 
-        /* Animated Background */
-        .bg-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
-
-        .bg-animation::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: 
-                radial-gradient(circle at 20% 80%, rgba(88, 101, 242, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(235, 69, 158, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(254, 231, 92, 0.1) 0%, transparent 40%);
-            animation: bgMove 20s ease-in-out infinite;
-        }
-
-        @keyframes bgMove {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            33% { transform: translate(2%, 2%) rotate(1deg); }
-            66% { transform: translate(-1%, 1%) rotate(-1deg); }
-        }
-
-        /* Floating Orbs */
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.4;
-            animation: float 15s ease-in-out infinite;
-        }
-
-        .orb-1 {
-            width: 400px;
-            height: 400px;
-            background: var(--primary);
-            top: 10%;
-            left: -10%;
-        }
-
-        .orb-2 {
-            width: 300px;
-            height: 300px;
-            background: var(--secondary);
-            bottom: 20%;
-            right: -5%;
-            animation-delay: -5s;
-        }
-
-        .orb-3 {
-            width: 200px;
-            height: 200px;
-            background: var(--accent);
-            top: 50%;
-            left: 50%;
-            animation-delay: -10s;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0); }
-            25% { transform: translate(20px, -30px); }
-            50% { transform: translate(-20px, 20px); }
-            75% { transform: translate(30px, 10px); }
-        }
-
-        /* Header */
-        header {
+        /* Navigation */
+        nav {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            padding: 20px 40px;
+            z-index: 1000;
+            background: rgba(14, 14, 16, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            z-index: 100;
-            background: linear-gradient(to bottom, rgba(10, 10, 26, 0.9), transparent);
         }
 
-        .logo {
+        .nav-logo {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 1.5em;
-            font-weight: 700;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: var(--text);
+            text-decoration: none;
         }
 
-        .logo-icon {
-            width: 45px;
-            height: 45px;
+        .nav-logo-icon {
+            width: 36px;
+            height: 36px;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 12px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.3em;
-            box-shadow: 0 4px 20px rgba(88, 101, 242, 0.4);
+            font-size: 1.2rem;
         }
 
-        nav {
+        .nav-links {
             display: flex;
-            gap: 30px;
             align-items: center;
+            gap: 30px;
         }
 
-        nav a {
+        .nav-links a {
             color: var(--text-muted);
             text-decoration: none;
             font-weight: 500;
-            transition: color 0.3s;
-            position: relative;
+            font-size: 0.95rem;
+            transition: color 0.2s;
         }
 
-        nav a:hover {
+        .nav-links a:hover {
             color: var(--text);
         }
 
-        nav a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            transition: width 0.3s;
+        .nav-cta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
-        nav a:hover::after {
-            width: 100%;
-        }
-
-        .invite-btn {
-            padding: 10px 25px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
+        .btn-login {
+            color: var(--text-muted);
             text-decoration: none;
-            border-radius: 25px;
-            font-weight: 600;
-            transition: transform 0.3s, box-shadow 0.3s;
+            font-weight: 500;
+            font-size: 0.95rem;
         }
 
-        .invite-btn:hover {
+        .btn-premium {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-add {
+            background: var(--primary);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-add:hover {
+            background: var(--primary-dark);
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(88, 101, 242, 0.4);
         }
 
         /* Hero Section */
@@ -194,32 +141,48 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 100px 40px;
+            padding: 120px 30px 80px;
             position: relative;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(88, 101, 242, 0.3), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 60%, rgba(235, 69, 158, 0.15), transparent);
         }
 
         .hero-content {
+            max-width: 900px;
             text-align: center;
-            max-width: 800px;
+            position: relative;
+            z-index: 1;
         }
 
         .hero-badge {
-            display: inline-block;
-            padding: 8px 20px;
-            background: rgba(88, 101, 242, 0.2);
-            border: 1px solid rgba(88, 101, 242, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(88, 101, 242, 0.15);
+            border: 1px solid rgba(88, 101, 242, 0.3);
+            padding: 8px 16px;
             border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 500;
             color: var(--primary);
-            font-weight: 600;
-            margin-bottom: 25px;
-            font-size: 0.9em;
+            margin-bottom: 30px;
         }
 
         .hero h1 {
-            font-size: 4em;
-            font-weight: 800;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 900;
             line-height: 1.1;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             background: linear-gradient(135deg, #fff 0%, #b9bbbe 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -227,325 +190,339 @@
         }
 
         .hero h1 span {
-            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero p {
-            font-size: 1.3em;
-            color: var(--text-muted);
-            margin-bottom: 40px;
-            line-height: 1.7;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn-primary {
-            padding: 15px 40px;
-            background: linear-gradient(135deg, var(--primary), #7289da);
-            color: white;
-            text-decoration: none;
-            border-radius: 30px;
-            font-weight: 600;
-            font-size: 1.1em;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(88, 101, 242, 0.4);
-        }
-
-        .btn-secondary {
-            padding: 15px 40px;
-            background: transparent;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            text-decoration: none;
-            border-radius: 30px;
-            font-weight: 600;
-            font-size: 1.1em;
-            transition: all 0.3s;
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.4);
-        }
-
-        /* Status */
-        .status-section {
-            margin-top: 50px;
-            padding: 30px;
-            background: var(--card-bg);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            display: inline-flex;
-            align-items: center;
-            gap: 30px;
-        }
-
-        .status-item {
-            text-align: center;
-        }
-
-        .status-dot {
-            width: 12px;
-            height: 12px;
-            background: #2ed573;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.2); }
-        }
-
-        .status-label {
-            font-size: 0.9em;
-            color: var(--text-muted);
-        }
-
-        .status-value {
-            font-size: 1.5em;
-            font-weight: 700;
-        }
-
-        /* Features Section */
-        .features {
-            padding: 100px 40px;
-            background: rgba(0, 0, 0, 0.3);
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-
-        .section-header h2 {
-            font-size: 2.5em;
-            font-weight: 700;
-            margin-bottom: 15px;
-        }
-
-        .section-header p {
-            color: var(--text-muted);
-            font-size: 1.1em;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .feature-card {
-            background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 30px;
-            transition: all 0.3s;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary);
-            box-shadow: 0 20px 40px rgba(88, 101, 242, 0.2);
-        }
-
-        .feature-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, rgba(88, 101, 242, 0.2), rgba(235, 69, 158, 0.2));
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8em;
-            margin-bottom: 20px;
-        }
-
-        .feature-card h3 {
-            font-size: 1.3em;
-            margin-bottom: 10px;
-        }
-
-        .feature-card p {
-            color: var(--text-muted);
-            line-height: 1.6;
-        }
-
-        /* Stats Section */
-        .stats {
-            padding: 80px 40px;
-            background: linear-gradient(135deg, rgba(88, 101, 242, 0.1), rgba(235, 69, 158, 0.1));
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 30px;
-            max-width: 1000px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .stat-card {
-            padding: 30px;
-        }
-
-        .stat-number {
-            font-size: 3em;
-            font-weight: 800;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .stat-label {
+        .hero p {
+            font-size: 1.25rem;
             color: var(--text-muted);
-            font-size: 1.1em;
-            margin-top: 10px;
+            max-width: 650px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 50px;
+        }
+
+        .btn-hero-primary {
+            background: var(--primary);
+            color: white;
+            padding: 16px 40px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-hero-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(88, 101, 242, 0.4);
+        }
+
+        .btn-hero-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            padding: 16px 40px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-hero-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Stats */
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 30px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 60px;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+        }
+
+        .section-header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(88, 101, 242, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Plugins Section */
+        .plugins {
+            padding: 100px 30px;
+        }
+
+        .plugins-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .plugin-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .plugin-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .plugin-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(88, 101, 242, 0.15);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .plugin-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 100px 30px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(88, 101, 242, 0.1), rgba(235, 69, 158, 0.1));
+        }
+
+        .cta h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .cta p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 30px;
         }
 
         /* Footer */
         footer {
-            padding: 40px;
-            text-align: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 60px 30px 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        footer p {
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h4 {
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        .footer-section a {
+            display: block;
             color: var(--text-muted);
+            text-decoration: none;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            transition: color 0.2s;
         }
 
-        footer a {
+        .footer-section a:hover {
             color: var(--primary);
-            text-decoration: none;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            font-size: 0.9rem;
         }
 
         /* Mobile */
         @media (max-width: 768px) {
-            header {
-                padding: 15px 20px;
-            }
-
-            nav {
+            .nav-links {
                 display: none;
             }
 
+            .hero-stats {
+                gap: 40px;
+            }
+
             .hero h1 {
-                font-size: 2.5em;
-            }
-
-            .hero p {
-                font-size: 1em;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .status-section {
-                flex-direction: column;
-                gap: 20px;
+                font-size: 2.2rem;
             }
 
             .features-grid {
                 grid-template-columns: 1fr;
             }
         }
-
-        /* Loading Animation */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
-    <!-- Background Animation -->
-    <div class="bg-animation">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-        <div class="orb orb-3"></div>
-    </div>
-
-    <!-- Header -->
-    <header>
-        <div class="logo">
-            <div class="logo-icon">🤖</div>
-            <span>Tool</span>
-        </div>
-        <nav>
-            <a href="#features">Recursos</a>
-            <a href="#stats">Estatísticas</a>
-            <a href="https://discord.com/oauth2/authorize?client_id=1456684394180776100&permissions=8&scope=bot" target="_blank" class="invite-btn">
-                Convidar Bot
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <div class="nav-logo-icon">🤖</div>
+                <span>Tool</span>
             </a>
-        </nav>
-    </header>
+            <div class="nav-links">
+                <a href="#plugins">Plugins</a>
+                <a href="#features">Recursos</a>
+                <a href="#premium">Premium</a>
+                <a href="#support">Suporte</a>
+            </div>
+            <div class="nav-cta">
+                <a href="https://discord.com/oauth2/authorize?client_id=1456684394180776100&permissions=8&scope=bot" class="btn-login">Login</a>
+                <a href="https://discord.com/oauth2/authorize?client_id=1456684394180776100&permissions=8&scope=bot" class="btn-add">Adicionar ao Discord</a>
+            </div>
+        </div>
+    </nav>
 
     <!-- Hero Section -->
     <section class="hero">
+        <div class="hero-bg"></div>
         <div class="hero-content">
             <div class="hero-badge">
-                <span class="status-dot"></span> Bot Online 24/7
+                <span>✨</span> O bot mais completo para seu servidor
             </div>
-            <h1>Potencialize seu servidor com <span>Tool</span></h1>
-            <p>O bot Discord mais completo e moderno. Moderation, música, economia, jogos e muito mais em um único bot.</p>
+            <h1>Leve seu servidor Discord para o <span>próximo nível</span></h1>
+            <p>Tool é um bot tudo-em-um com moderação avançada, música, sistema de níveis, mensagens de boas-vindas e muito mais.</p>
             
             <div class="hero-buttons">
-                <a href="https://discord.com/oauth2/authorize?client_id=1456684394180776100&permissions=8&scope=bot" target="_blank" class="btn-primary">
-                    🚀 Adicionar ao Servidor
+                <a href="https://discord.com/oauth2/authorize?client_id=1456684394180776100&permissions=8&scope=bot" class="btn-hero-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+                    Adicionar ao Discord
                 </a>
-                <a href="#features" class="btn-secondary">
-                    Ver Recursos
-                </a>
+                <a href="#features" class="btn-hero-secondary">Ver Recursos</a>
             </div>
 
-            <div class="status-section">
-                <div class="status-item">
-                    <div class="status-value">1</div>
-                    <div class="status-label">Servidores</div>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <div class="stat-value">1</div>
+                    <div class="stat-label">Servidor</div>
                 </div>
-                <div class="status-item">
-                    <div class="status-value">100+</div>
-                    <div class="status-label">Usuários</div>
+                <div class="stat-item">
+                    <div class="stat-value">100+</div>
+                    <div class="stat-label">Comandos</div>
                 </div>
-                <div class="status-item">
-                    <div class="status-value">50+</div>
-                    <div class="status-label">Comandos</div>
+                <div class="stat-item">
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Categorias</div>
                 </div>
-                <div class="status-item">
-                    <div class="status-value" id="latency">--ms</div>
-                    <div class="status-label">Latência</div>
+                <div class="stat-item">
+                    <div class="stat-value">24/7</div>
+                    <div class="stat-label">Online</div>
                 </div>
             </div>
         </div>
@@ -554,112 +531,165 @@
     <!-- Features Section -->
     <section class="features" id="features">
         <div class="section-header">
-            <h2>Recursos Incríveis</h2>
-            <p>Tudo que você precisa para gerenciar sua comunidade</p>
+            <h2>Recursos Poderosos</h2>
+            <p>Tenha tudo o que precisa para gerenciar sua comunidade em um único bot</p>
         </div>
 
         <div class="features-grid">
             <div class="feature-card">
-                <div class="feature-icon">🎵</div>
-                <h3>Música</h3>
-                <p>Toque músicas do YouTube, SoundCloud e mais. Filas, playlists e controle total.</p>
+                <div class="feature-icon">🛡️</div>
+                <h3>Moderação</h3>
+                <p>Automod, warns, bans, kicks, mute, filtragem de palavras e muito mais para manter seu servidor seguro.</p>
             </div>
 
             <div class="feature-card">
-                <div class="feature-icon">🛡️</div>
-                <h3>Moderação</h3>
-                <p>Sistema completo de moderação com warns, kicks, bans e filtros automáticos.</p>
+                <div class="feature-icon">🎵</div>
+                <h3>Música</h3>
+                <p>Toque músicas do YouTube, SoundCloud e outras plataformas. Filas, playlists e controle total.</p>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">⭐</div>
                 <h3>Level & XP</h3>
-                <p>Sistema de níveis automático com ranks, recompensas e leaderboards.</p>
+                <p>Sistema de níveis automático com ranks, recompensas, leaderboard e customizable.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">👋</div>
+                <h3>Bem-vindas</h3>
+                <p>Mensagens personalizadas de boas-vindas e despedida em canais ou DM.</p>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">🎮</div>
-                <h3>Jogos</h3>
-                <p>Diversão com dice, polls, eventos e muito mais para entreter sua comunidade.</p>
+                <h3>Jogos & Diversão</h3>
+                <p>Dice, polls, eventos, giveaways e muito mais para entreter sua comunidade.</p>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">💰</div>
                 <h3>Economia</h3>
-                <p>Sistema completo de economia com loja, inventário e transações.</p>
+                <p>Sistema completo de economia com loja, inventário, transações e daily rewards.</p>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">🤖</div>
                 <h3>IA Generativa</h3>
-                <p>Integração com IA para chat, geração de imagens e muito mais.</p>
+                <p>Integração com IA para chat, geração de imagens e Assistance智能.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Logs & Análises</h3>
+                <p>Logs detalhados de todas as atividades, analytics e insights do servidor.</p>
             </div>
 
             <div class="feature-card">
                 <div class="feature-icon">🎫</div>
                 <h3>Ticket Support</h3>
-                <p>Sistema de tickets para suporte direto aos usuários.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3>Análises</h3>
-                <p>Logs detalhados, analytics e insights sobre seu servidor.</p>
+                <p>Sistema completo de tickets para suporte direto aos usuários.</p>
             </div>
         </div>
     </section>
 
-    <!-- Stats Section -->
-    <section class="stats" id="stats">
+    <!-- Plugins Section -->
+    <section class="plugins" id="plugins">
         <div class="section-header">
-            <h2>Números do Bot</h2>
+            <h2>Plugins</h2>
+            <p>Ative ou desative os recursos que você precisa</p>
         </div>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number">50+</div>
-                <div class="stat-label">Comandos</div>
+
+        <div class="plugins-grid">
+            <div class="plugin-item">
+                <div class="plugin-icon">🛡️</div>
+                <div class="plugin-name">Moderação</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number">8</div>
-                <div class="stat-label">Categorias</div>
+            <div class="plugin-item">
+                <div class="plugin-icon">🎵</div>
+                <div class="plugin-name">Música</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number">24/7</div>
-                <div class="stat-label">Online</div>
+            <div class="plugin-item">
+                <div class="plugin-icon">⭐</div>
+                <div class="plugin-name">Níveis</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number">100%</div>
-                <div class="stat-label">Gratuito</div>
+            <div class="plugin-item">
+                <div class="plugin-icon">👋</div>
+                <div class="plugin-name">Bem-vindas</div>
+            </div>
+            <div class="plugin-item">
+                <div class="plugin-icon">🎮</div>
+                <div class="plugin-name">Jogos</div>
+            </div>
+            <div class="plugin-item">
+                <div class="plugin-icon">💰</div>
+                <div class="plugin-name">Economia</div>
+            </div>
+            <div class="plugin-item">
+                <div class="plugin-icon">🤖</div>
+                <div class="plugin-name">IA</div>
+            </div>
+            <div class="plugin-item">
+                <div class="plugin-icon">🎫</div>
+                <div class="plugin-name">Tickets</div>
+            </div>
+            <div class="plugin-item">
+                <div class="plugin-icon">📊</div>
+                <div class="plugin-name">Logs</div>
+            </div>
+            <div class="plugin-item">
+                <div class="plugin-icon">📢</div>
+                <div class="plugin-name">Alertas</div>
             </div>
         </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta" id="premium">
+        <h2>Pronto para começar?</h2>
+        <p>Adicione Tool ao seu servidor gratuitamente e transforme sua comunidade hoje mesmo!</p>
+        <a href="https://discord.com/oauth2/authorize?client_id=1456684394180776100&permissions=8&scope=bot" class="btn-hero-primary">
+            Adicionar ao Discord Grátis
+        </a>
     </section>
 
     <!-- Footer -->
-    <footer>
-        <p>© 2024 <strong>Tool Bot</strong>. Todos os direitos reservados.</p>
-        <p>Feito com ❤️ para a comunidade Discord</p>
+    <footer id="support">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Tool</h4>
+                <a href="#">Dashboard</a>
+                <a href="#">Status</a>
+                <a href="#">Termos de Uso</a>
+                <a href="#">Privacidade</a>
+            </div>
+            <div class="footer-section">
+                <h4>Recursos</h4>
+                <a href="#features">Moderação</a>
+                <a href="#features">Música</a>
+                <a href="#features">Level XP</a>
+                <a href="#features">Economia</a>
+            </div>
+            <div class="footer-section">
+                <h4>Suporte</h4>
+                <a href="#">Documentação</a>
+                <a href="#">Tutoriais</a>
+                <a href="#">Discord Support</a>
+                <a href="#">Contato</a>
+            </div>
+            <div class="footer-section">
+                <h4>Empresa</h4>
+                <a href="#">Sobre</a>
+                <a href="#">Carreiras</a>
+                <a href="#">Blog</a>
+                <a href="#">Contato</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2024 Tool Bot. Todos os direitos reservados.</p>
+        </div>
     </footer>
 
     <script>
-        // Update latency
-        function updateLatency() {
-            const start = Date.now();
-            fetch('/')
-                .then(() => {
-                    const latency = Date.now() - start;
-                    document.getElementById('latency').textContent = latency + 'ms';
-                })
-                .catch(() => {
-                    document.getElementById('latency').textContent = '--ms';
-                });
-        }
-
-        // Initial latency check
-        setTimeout(updateLatency, 1000);
-
-        // Update every 30 seconds
-        setInterval(updateLatency, 30000);
-
         // Smooth scroll
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
@@ -671,11 +701,15 @@
             });
         });
 
-        // Auto refresh page every 60 seconds to simulate "alive" status
-        setTimeout(() => {
-            // Optional: can be enabled if needed
-            // location.reload();
-        }, 60000);
+        // Nav background on scroll
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.style.background = 'rgba(14, 14, 16, 0.95)';
+            } else {
+                nav.style.background = 'rgba(14, 14, 16, 0.85)';
+            }
+        });
     </script>
 </body>
 </html>
