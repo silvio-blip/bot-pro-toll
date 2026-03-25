@@ -13,7 +13,14 @@ from typing import Dict, Any, Callable, Optional
 import glob
 
 def find_opus_lib():
-    """Procura a biblioteca opus nos caminhos comuns do Nix"""
+    """Procura a biblioteca opus nos caminhos comuns"""
+    # Primeiro verifica caminhos do sistema (Railway)
+    system_paths = ['/usr/lib', '/usr/local/lib']
+    for sp in system_paths:
+        if os.path.exists(f"{sp}/libopus.so"):
+            return sp
+    
+    # Depois Nix
     nix_paths = glob.glob("/nix/store/*-libopus-*/lib")
     for path in nix_paths:
         if os.path.exists(path):
@@ -23,6 +30,7 @@ def find_opus_lib():
 opus_path = find_opus_lib()
 if opus_path:
     os.environ['LD_LIBRARY_PATH'] = f"{opus_path}:{os.environ.get('LD_LIBRARY_PATH', '')}"
+    print(f"[INFO] Opus library path: {opus_path}")
 
 # Railway deployment - check if we're on Railway
 RAILWAY_ENV = os.environ.get('RAILWAY_ENVIRONMENT', False)
