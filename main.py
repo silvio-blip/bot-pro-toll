@@ -115,7 +115,6 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 intents.guilds = True
-intents.voice_states = True  # Necessário para sistema de música
 
 # --- Configuração do Bot Discord ---
 class MyBot(commands.Bot):
@@ -155,8 +154,7 @@ class MyBot(commands.Bot):
             'cogs.embed_command',
             'cogs.ia.agent_ia',
             'cogs.downloads.download_command',
-            'cogs.downloads.auto_download',
-            'cogs.music.music_cog'
+            'cogs.downloads.auto_download'
         ]
 
     async def update_xp(self, user: discord.Member, guild: discord.Guild, xp_change: int, is_message: bool = False) -> Optional[int]:
@@ -262,8 +260,7 @@ class MyBot(commands.Bot):
             'cogs.embed_command': '📨',
             'cogs.ia.agent_ia': '🧠',
             'cogs.downloads.download_command': '⬇️',
-            'cogs.downloads.auto_download': '📥',
-            'cogs.music.music_cog': '🎵'
+            'cogs.downloads.auto_download': '📥'
         }
         return emoji_map.get(cog_name, '📦')
 

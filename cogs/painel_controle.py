@@ -13,7 +13,6 @@ from cogs.moderacao.captcha import CaptchaConfigModal
 from cogs.moderacao.warns import WarnsConfigModal
 from cogs.moderacao.logs import LogSettingsView
 from cogs.moderacao.limpar import LimparConfigModal
-from cogs.music.music_cog import MusicConfigModal
 from cogs.moderacao.filtros import (
     BadWordsConfigModal, InviteFilterConfigModal, LinkFilterConfigModal,
     AntiCapsConfigModal, AntiEmojiConfigModal, AntiSpamConfigModal
@@ -402,32 +401,6 @@ class AgentIASettingsView(ui.View):
         self.add_item(AgentIASelect(bot))
         self.add_item(BackButton(bot, row=1))
 
-class MusicSelect(ui.Select):
-    def __init__(self, bot):
-        self.bot = bot
-        options = [
-            SelectOption(label="Configurações de Música", value="music_config", emoji="🎵")
-        ]
-        super().__init__(placeholder="Escolha uma opção...", options=options)
-    async def callback(self, i: Interaction):
-        config = {}
-        try:
-            response = self.bot.supabase_client.table("music_config").select("*").eq("server_guild_id", i.guild.id).execute()
-            if response.data and response.data[0]:
-                config = response.data[0]
-        except Exception as e:
-            logger.error(f"Erro ao buscar config de música: {e}")
-        await i.response.send_modal(MusicConfigModal(self.bot, config=config))
-
-
-class MusicSettingsView(ui.View):
-    def __init__(self, bot):
-        super().__init__(timeout=None)
-        self.bot = bot
-        self.add_item(MusicSelect(bot))
-        self.add_item(BackButton(bot, row=1))
-
-
 # --- View Principal do Painel (Correta e Funcional) ---
 class PainelView(ui.View):
     def __init__(self, bot):
@@ -457,10 +430,6 @@ class PainelView(ui.View):
     @ui.button(label="Agente IA", emoji="🤖", style=ButtonStyle.primary, custom_id="painel_ia_final_v4", row=1)
     async def ia_button(self, i: Interaction, button: ui.Button):
         await i.response.edit_message(content="🤖 **Agente IA** - Configure o agente:", embed=None, view=AgentIASettingsView(self.bot))
-
-    @ui.button(label="Música", emoji="🎵", style=ButtonStyle.blurple, custom_id="painel_music_final_v4", row=2)
-    async def music_button(self, i: Interaction, button: ui.Button):
-        await i.response.edit_message(content="🎵 **Música** - Configure o player:", embed=None, view=MusicSettingsView(self.bot))
 
 
 # --- Cog Principal ---
