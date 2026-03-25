@@ -4,253 +4,678 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tool - Bot Discord</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
+        :root {
+            --primary: #5865F2;
+            --secondary: #EB459E;
+            --accent: #FEE75C;
+            --dark: #0f0f23;
+            --darker: #0a0a1a;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text: #ffffff;
+            --text-muted: #b9bbbe;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Poppins', sans-serif;
+            background: var(--darker);
+            color: var(--text);
             min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(88, 101, 242, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(235, 69, 158, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(254, 231, 92, 0.1) 0%, transparent 40%);
+            animation: bgMove 20s ease-in-out infinite;
+        }
+
+        @keyframes bgMove {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(2%, 2%) rotate(1deg); }
+            66% { transform: translate(-1%, 1%) rotate(-1deg); }
+        }
+
+        /* Floating Orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float 15s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--primary);
+            top: 10%;
+            left: -10%;
+        }
+
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: var(--secondary);
+            bottom: 20%;
+            right: -5%;
+            animation-delay: -5s;
+        }
+
+        .orb-3 {
+            width: 200px;
+            height: 200px;
+            background: var(--accent);
+            top: 50%;
+            left: 50%;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(20px, -30px); }
+            50% { transform: translate(-20px, 20px); }
+            75% { transform: translate(30px, 10px); }
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 40px;
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: linear-gradient(to bottom, rgba(10, 10, 26, 0.9), transparent);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
             align-items: center;
             justify-content: center;
-            color: #fff;
+            font-size: 1.3em;
+            box-shadow: 0 4px 20px rgba(88, 101, 242, 0.4);
         }
-        
-        .container {
+
+        nav {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        nav a:hover {
+            color: var(--text);
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s;
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        .invite-btn {
+            padding: 10px 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .invite-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(88, 101, 242, 0.4);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 100px 40px;
+            position: relative;
+        }
+
+        .hero-content {
             text-align: center;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            max-width: 600px;
-            width: 90%;
+            max-width: 800px;
         }
-        
-        .logo {
-            font-size: 80px;
+
+        .hero-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(88, 101, 242, 0.2);
+            border: 1px solid rgba(88, 101, 242, 0.4);
+            border-radius: 50px;
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 25px;
+            font-size: 0.9em;
+        }
+
+        .hero h1 {
+            font-size: 4em;
+            font-weight: 800;
+            line-height: 1.1;
             margin-bottom: 20px;
-        }
-        
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+            background: linear-gradient(135deg, #fff 0%, #b9bbbe 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        
-        .subtitle {
-            font-size: 1.2em;
-            color: #aaa;
-            margin-bottom: 30px;
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        
-        .status {
+
+        .hero p {
+            font-size: 1.3em;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            line-height: 1.7;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, var(--primary), #7289da);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(88, 101, 242, 0.4);
+        }
+
+        .btn-secondary {
+            padding: 15px 40px;
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Status */
+        .status-section {
+            margin-top: 50px;
+            padding: 30px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-size: 1.1em;
-            margin-bottom: 30px;
+            gap: 30px;
         }
-        
-        .status.online {
-            background: rgba(46, 213, 115, 0.2);
-            color: #2ed573;
-            border: 1px solid #2ed573;
+
+        .status-item {
+            text-align: center;
         }
-        
-        .status.offline {
-            background: rgba(255, 71, 87, 0.2);
-            color: #ff4757;
-            border: 1px solid #ff4757;
-        }
-        
+
         .status-dot {
             width: 12px;
             height: 12px;
+            background: #2ed573;
             border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
             animation: pulse 2s infinite;
         }
-        
-        .status.online .status-dot {
-            background: #2ed573;
-        }
-        
-        .status.offline .status-dot {
-            background: #ff4757;
-        }
-        
+
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.2); }
         }
-        
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .info-card {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .info-card h3 {
+
+        .status-label {
             font-size: 0.9em;
-            color: #888;
-            margin-bottom: 5px;
+            color: var(--text-muted);
         }
-        
-        .info-card p {
-            font-size: 1.2em;
-            font-weight: bold;
+
+        .status-value {
+            font-size: 1.5em;
+            font-weight: 700;
         }
-        
+
+        /* Features Section */
         .features {
-            text-align: left;
-            background: rgba(255, 255, 255, 0.03);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 30px;
+            padding: 100px 40px;
+            background: rgba(0, 0, 0, 0.3);
         }
-        
-        .features h3 {
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-header h2 {
+            font-size: 2.5em;
+            font-weight: 700;
             margin-bottom: 15px;
-            color: #00d4ff;
         }
-        
-        .features ul {
-            list-style: none;
-        }
-        
-        .features li {
-            padding: 8px 0;
-            padding-left: 25px;
-            position: relative;
-        }
-        
-        .features li::before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #2ed573;
-        }
-        
-        .invite-btn {
-            display: inline-block;
-            padding: 15px 40px;
-            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
-            color: #fff;
-            text-decoration: none;
-            border-radius: 50px;
+
+        .section-header p {
+            color: var(--text-muted);
             font-size: 1.1em;
-            font-weight: bold;
-            transition: transform 0.3s, box-shadow 0.3s;
         }
-        
-        .invite-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        
-        .footer {
-            margin-top: 30px;
-            color: #666;
-            font-size: 0.9em;
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            transition: all 0.3s;
         }
-        
-        .ping {
-            margin-top: 20px;
-            font-size: 0.9em;
-            color: #666;
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(88, 101, 242, 0.2);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, rgba(88, 101, 242, 0.2), rgba(235, 69, 158, 0.2));
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Stats Section */
+        .stats {
+            padding: 80px 40px;
+            background: linear-gradient(135deg, rgba(88, 101, 242, 0.1), rgba(235, 69, 158, 0.1));
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .stat-card {
+            padding: 30px;
+        }
+
+        .stat-number {
+            font-size: 3em;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 1.1em;
+            margin-top: 10px;
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        footer p {
+            color: var(--text-muted);
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            header {
+                padding: 15px 20px;
+            }
+
+            nav {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2.5em;
+            }
+
+            .hero p {
+                font-size: 1em;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .status-section {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">🤖</div>
-        <h1>Tool</h1>
-        <p class="subtitle">Seu bot Discord completo</p>
-        
-        <div class="status online" id="status">
-            <span class="status-dot"></span>
-            <span id="status-text">Online</span>
-        </div>
-        
-        <div class="info-grid">
-            <div class="info-card">
-                <h3>Servidores</h3>
-                <p id="servers">-</p>
-            </div>
-            <div class="info-card">
-                <h3>Usuários</h3>
-                <p id="users">-</p>
-            </div>
-            <div class="info-card">
-                <h3>Latência</h3>
-                <p id="ping">-ms</p>
-            </div>
-            <div class="info-card">
-                <h3>Comandos</h3>
-                <p>50+</p>
-            </div>
-        </div>
-        
-        <div class="features">
-            <h3>Recursos</h3>
-            <ul>
-                <li>🎵 Sistema de Música (YouTube, SoundCloud)</li>
-                <li>🛡️ Moderação avançada</li>
-                <li>⭐ Sistema de XP e Level</li>
-                <li>🎮 Jogos e Diversão</li>
-                <li>🎫 Sistema de Tickets</li>
-                <li>💰 Loja e Economia</li>
-                <li>🤖 IA Generativa</li>
-                <li>📊 Análises e Logs</li>
-            </ul>
-        </div>
-        
-        <a href="https://discord.com/oauth2/authorize?client_id=1456684394180776100&permissions=8&scope=bot" target="_blank" class="invite-btn">
-            🚀 Convidar Bot
-        </a>
-        
-        <div class="ping" id="last-update">
-            Atualizado em: Carregando...
-        </div>
-        
-        <div class="footer">
-            <p>Desenvolvido com ❤️ | Tool Bot 2024</p>
-        </div>
+    <!-- Background Animation -->
+    <div class="bg-animation">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
     </div>
-    
+
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <div class="logo-icon">🤖</div>
+            <span>Tool</span>
+        </div>
+        <nav>
+            <a href="#features">Recursos</a>
+            <a href="#stats">Estatísticas</a>
+            <a href="https://discord.com/oauth2/authorize?client_id=1456684394180776100&permissions=8&scope=bot" target="_blank" class="invite-btn">
+                Convidar Bot
+            </a>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="status-dot"></span> Bot Online 24/7
+            </div>
+            <h1>Potencialize seu servidor com <span>Tool</span></h1>
+            <p>O bot Discord mais completo e moderno. Moderation, música, economia, jogos e muito mais em um único bot.</p>
+            
+            <div class="hero-buttons">
+                <a href="https://discord.com/oauth2/authorize?client_id=1456684394180776100&permissions=8&scope=bot" target="_blank" class="btn-primary">
+                    🚀 Adicionar ao Servidor
+                </a>
+                <a href="#features" class="btn-secondary">
+                    Ver Recursos
+                </a>
+            </div>
+
+            <div class="status-section">
+                <div class="status-item">
+                    <div class="status-value">1</div>
+                    <div class="status-label">Servidores</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value">100+</div>
+                    <div class="status-label">Usuários</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value">50+</div>
+                    <div class="status-label">Comandos</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-value" id="latency">--ms</div>
+                    <div class="status-label">Latência</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="section-header">
+            <h2>Recursos Incríveis</h2>
+            <p>Tudo que você precisa para gerenciar sua comunidade</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🎵</div>
+                <h3>Música</h3>
+                <p>Toque músicas do YouTube, SoundCloud e mais. Filas, playlists e controle total.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🛡️</div>
+                <h3>Moderação</h3>
+                <p>Sistema completo de moderação com warns, kicks, bans e filtros automáticos.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">⭐</div>
+                <h3>Level & XP</h3>
+                <p>Sistema de níveis automático com ranks, recompensas e leaderboards.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🎮</div>
+                <h3>Jogos</h3>
+                <p>Diversão com dice, polls, eventos e muito mais para entreter sua comunidade.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">💰</div>
+                <h3>Economia</h3>
+                <p>Sistema completo de economia com loja, inventário e transações.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>IA Generativa</h3>
+                <p>Integração com IA para chat, geração de imagens e muito mais.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🎫</div>
+                <h3>Ticket Support</h3>
+                <p>Sistema de tickets para suporte direto aos usuários.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Análises</h3>
+                <p>Logs detalhados, analytics e insights sobre seu servidor.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats" id="stats">
+        <div class="section-header">
+            <h2>Números do Bot</h2>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">50+</div>
+                <div class="stat-label">Comandos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">8</div>
+                <div class="stat-label">Categorias</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Online</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Gratuito</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2024 <strong>Tool Bot</strong>. Todos os direitos reservados.</p>
+        <p>Feito com ❤️ para a comunidade Discord</p>
+    </footer>
+
     <script>
-        // Auto refresh every 30 seconds to keep the "server" alive
+        // Update latency
+        function updateLatency() {
+            const start = Date.now();
+            fetch('/')
+                .then(() => {
+                    const latency = Date.now() - start;
+                    document.getElementById('latency').textContent = latency + 'ms';
+                })
+                .catch(() => {
+                    document.getElementById('latency').textContent = '--ms';
+                });
+        }
+
+        // Initial latency check
+        setTimeout(updateLatency, 1000);
+
+        // Update every 30 seconds
+        setInterval(updateLatency, 30000);
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Auto refresh page every 60 seconds to simulate "alive" status
         setTimeout(() => {
-            location.reload();
-        }, 30000);
-        
-        // Update timestamp
-        document.getElementById('last-update').textContent = 
-            'Atualizado em: ' + new Date().toLocaleTimeString('pt-BR');
-        
-        // Simulate bot stats (in real scenario, this would fetch from an API)
-        document.getElementById('servers').textContent = '1';
-        document.getElementById('users').textContent = '100+';
-        document.getElementById('ping').textContent = Math.floor(Math.random() * 100 + 50) + 'ms';
+            // Optional: can be enabled if needed
+            // location.reload();
+        }, 60000);
     </script>
 </body>
 </html>
