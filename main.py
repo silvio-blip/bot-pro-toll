@@ -9,7 +9,7 @@ import logging
 import asyncio
 from typing import Dict, Any, Callable, Optional
 
-# --- Configurar LD_LIBRARY_PATH para Opus (Nix) ---
+# --- Configurar LD_LIBRARY_PATH para Opus ---
 import glob
 
 def find_opus_lib():
@@ -23,6 +23,9 @@ def find_opus_lib():
 opus_path = find_opus_lib()
 if opus_path:
     os.environ['LD_LIBRARY_PATH'] = f"{opus_path}:{os.environ.get('LD_LIBRARY_PATH', '')}"
+
+# Railway deployment - check if we're on Railway
+RAILWAY_ENV = os.environ.get('RAILWAY_ENVIRONMENT', False)
 
 # --- Configuração do Logging ---
 # Filter para remover logs HTTP do Supabase e rate limiting
