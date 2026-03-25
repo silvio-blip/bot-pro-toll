@@ -11,12 +11,5 @@
       "src": "/(.*)",
       "dest": "/public/$1"
     }
-  ],
-  "框架": null,
-  "rewrites": [
-    {
-      "source": "/((?!api/).*)",
-      "destination": "/public/index.html"
-    }
   ]
 }
