@@ -222,16 +222,48 @@ async def buscar_musica(query: str) -> Optional[dict]:
             'no_warnings': True,
             'noplaylist': True,
             'extract_flat': False,
+            'extractor_retries': 3,
+            'fragment_retries': 3,
+            'skip_unavailable_fragments': False,
         }
         
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            if is_url:
-                # É URL direta - tenta extrair info
-                info = ydl.extract_info(query, download=False)
-            else:
-                # Busca genérica - procura em múltiplas fontes
-                #yt-dlp já busca em várias plataformas por padrão
-                info = ydl.extract_info(f"ytsearch5:{query}", download=False)
+        # Tenta usar cookies se existir
+        import os
+        cookies_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'cookies.txt')
+        if os.path.exists(cookies_path):
+            ydl_opts['cookiefile'] = cookies_path
+        
+        # Tenta múltiplas fontes
+        sources_to_try = []
+        
+        if is_url:
+            sources_to_try.append(query)
+        else:
+            # Busca em várias fontes
+            sources_to_try = [
+                f"ytsearch3:{query}",  # YouTube
+                f"soundcloudsearch:{query}",  # SoundCloud
+                f"bandcampsearch:{query}",  # Bandcamp
+                f"youtubesearch:{query}",  # YouTube alternativo
+            ]
+        
+        last_error = None
+        for source in sources_to_try:
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    if source.startswith("http"):
+                        info = ydl.extract_info(source, download=False)
+                    else:
+                        info = ydl.extract_info(source, download=False)
+                    
+                    if info:
+                        break
+            except Exception as e:
+                last_error = str(e)
+                logger.warning(f"[MUSIC] Fonte falhou ({source}): {e}")
+                continue
+        
+        if not info:
             
             if not info:
                 return None
