@@ -852,6 +852,24 @@
                 card.style.transform = 'translateY(0)';
             }, index * 100);
         });
+
+        // Try to start bot when page loads
+        fetch('/api/bot')
+            .then(res => res.json())
+            .then(data => {
+                console.log('Bot status:', data);
+            })
+            .catch(err => console.log('Bot API error:', err));
+
+        // Auto refresh every 30 seconds to keep bot "alive"
+        setInterval(() => {
+            fetch('/api/bot')
+                .then(res => res.json())
+                .then(data => {
+                    console.log('Bot alive check:', data);
+                })
+                .catch(err => {});
+        }, 30000);
     </script>
 </body>
 </html>
