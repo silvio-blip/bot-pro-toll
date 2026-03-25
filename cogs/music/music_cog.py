@@ -209,86 +209,74 @@ async def desconectar_bot(bot, guild):
 
 # --- Função para buscar música com yt-dlp (múltiplas fontes) ---
 import yt_dlp
+import os
 
 async def buscar_musica(query: str) -> Optional[dict]:
-    """Busca música de múltiplas fontes: YouTube, SoundCloud, Spotify, Bandcamp, etc."""
+    """Busca música de múltiplas fontes: YouTube, SoundCloud, etc."""
     try:
-        # Verificar se é uma URL direta
         is_url = query.startswith('http://') or query.startswith('https://')
         
         ydl_opts = {
-            'format': 'bestaudio/best',
+            'format': 'bestaudio*[ext=m4a]/bestaudio/best',
             'quiet': True,
             'no_warnings': True,
             'noplaylist': True,
             'extract_flat': False,
             'extractor_retries': 3,
-            'fragment_retries': 3,
-            'skip_unavailable_fragments': False,
         }
         
-        # Tenta usar cookies se existir
-        import os
         cookies_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'cookies.txt')
         if os.path.exists(cookies_path):
             ydl_opts['cookiefile'] = cookies_path
         
-        # Tenta múltiplas fontes
         sources_to_try = []
         
         if is_url:
             sources_to_try.append(query)
         else:
-            # Busca em várias fontes
             sources_to_try = [
-                f"ytsearch3:{query}",  # YouTube
-                f"soundcloudsearch:{query}",  # SoundCloud
-                f"bandcampsearch:{query}",  # Bandcamp
-                f"youtubesearch:{query}",  # YouTube alternativo
+                f"ytsearch5:{query}",
+                f"scsearch5:{query}",
             ]
         
+        info = None
         last_error = None
+        
         for source in sources_to_try:
             try:
+                logger.info(f"[MUSIC] Tentando buscar em: {source[:30]}...")
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    if source.startswith("http"):
-                        info = ydl.extract_info(source, download=False)
-                    else:
-                        info = ydl.extract_info(source, download=False)
+                    info = ydl.extract_info(source, download=False)
                     
                     if info:
                         break
             except Exception as e:
                 last_error = str(e)
-                logger.warning(f"[MUSIC] Fonte falhou ({source}): {e}")
+                logger.warning(f"[MUSIC] Fonte falhou ({source[:30]}...): {e}")
                 continue
         
         if not info:
-            
-            if not info:
-                return None
-            
-            # Se for uma busca, pega o primeiro resultado
-            if 'entries' in info:
-                info = info['entries'][0]
-            
-            # Pega o URL de áudio diretamente
-            audio_url = info.get('url')
-            if not audio_url:
-                # Tenta获取formats
-                formats = info.get('formats', [])
-                for f in formats:
-                    if f.get('ext') in ['m4a', 'webm', 'mp4'] and f.get('url'):
-                        audio_url = f['url']
-                        break
-            
-            return {
-                "title": info.get('title', 'Unknown'),
-                "url": audio_url or info.get('webpage_url'),
-                "duration": info.get('duration', 180),
-                "thumbnail": info.get('thumbnail'),
-                "source": info.get('extractor', 'unknown')
-            }
+            logger.error(f"[MUSIC] Nenhuma música encontrada: {last_error}")
+            return None
+        
+        if 'entries' in info:
+            info = info['entries'][0]
+        
+        audio_url = info.get('url')
+        if not audio_url:
+            formats = info.get('formats', [])
+            for f in formats:
+                if f.get('ext') in ['m4a', 'webm', 'mp4'] and f.get('url'):
+                    audio_url = f['url']
+                    break
+        
+        return {
+            "title": info.get('title', 'Unknown'),
+            "url": audio_url or info.get('webpage_url'),
+            "duration": info.get('duration', 180),
+            "thumbnail": info.get('thumbnail'),
+            "source": info.get('extractor', 'unknown')
+        }
     except Exception as e:
         logger.error(f"[MUSIC] Erro ao buscar música: {e}")
         return None
