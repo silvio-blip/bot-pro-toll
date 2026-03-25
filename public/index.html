@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool - Bot Discord</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 600px;
+            width: 90%;
+        }
+        
+        .logo {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+        
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+        
+        .status.online {
+            background: rgba(46, 213, 115, 0.2);
+            color: #2ed573;
+            border: 1px solid #2ed573;
+        }
+        
+        .status.offline {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+            border: 1px solid #ff4757;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .status.online .status-dot {
+            background: #2ed573;
+        }
+        
+        .status.offline .status-dot {
+            background: #ff4757;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .info-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .info-card h3 {
+            font-size: 0.9em;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        
+        .info-card p {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .features {
+            text-align: left;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        
+        .features h3 {
+            margin-bottom: 15px;
+            color: #00d4ff;
+        }
+        
+        .features ul {
+            list-style: none;
+        }
+        
+        .features li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .features li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #2ed573;
+        }
+        
+        .invite-btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .invite-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+        
+        .footer {
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .ping {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🤖</div>
+        <h1>Tool</h1>
+        <p class="subtitle">Seu bot Discord completo</p>
+        
+        <div class="status online" id="status">
+            <span class="status-dot"></span>
+            <span id="status-text">Online</span>
+        </div>
+        
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>Servidores</h3>
+                <p id="servers">-</p>
+            </div>
+            <div class="info-card">
+                <h3>Usuários</h3>
+                <p id="users">-</p>
+            </div>
+            <div class="info-card">
+                <h3>Latência</h3>
+                <p id="ping">-ms</p>
+            </div>
+            <div class="info-card">
+                <h3>Comandos</h3>
+                <p>50+</p>
+            </div>
+        </div>
+        
+        <div class="features">
+            <h3>Recursos</h3>
+            <ul>
+                <li>🎵 Sistema de Música (YouTube, SoundCloud)</li>
+                <li>🛡️ Moderação avançada</li>
+                <li>⭐ Sistema de XP e Level</li>
+                <li>🎮 Jogos e Diversão</li>
+                <li>🎫 Sistema de Tickets</li>
+                <li>💰 Loja e Economia</li>
+                <li>🤖 IA Generativa</li>
+                <li>📊 Análises e Logs</li>
+            </ul>
+        </div>
+        
+        <a href="https://discord.com/oauth2/authorize?client_id=1456684394180776100&permissions=8&scope=bot" target="_blank" class="invite-btn">
+            🚀 Convidar Bot
+        </a>
+        
+        <div class="ping" id="last-update">
+            Atualizado em: Carregando...
+        </div>
+        
+        <div class="footer">
+            <p>Desenvolvido com ❤️ | Tool Bot 2024</p>
+        </div>
+    </div>
+    
+    <script>
+        // Auto refresh every 30 seconds to keep the "server" alive
+        setTimeout(() => {
+            location.reload();
+        }, 30000);
+        
+        // Update timestamp
+        document.getElementById('last-update').textContent = 
+            'Atualizado em: ' + new Date().toLocaleTimeString('pt-BR');
+        
+        // Simulate bot stats (in real scenario, this would fetch from an API)
+        document.getElementById('servers').textContent = '1';
+        document.getElementById('users').textContent = '100+';
+        document.getElementById('ping').textContent = Math.floor(Math.random() * 100 + 50) + 'ms';
+    </script>
+</body>
+</html>
