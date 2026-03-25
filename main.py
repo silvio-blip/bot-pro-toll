@@ -9,8 +9,52 @@ import logging
 import asyncio
 from typing import Dict, Any, Callable, Optional
 
+# --- Configurar LD_LIBRARY_PATH para Opus (Nix) ---
+import glob
+
+def find_opus_lib():
+    """Procura a biblioteca opus nos caminhos comuns do Nix"""
+    nix_paths = glob.glob("/nix/store/*-libopus-*/lib")
+    for path in nix_paths:
+        if os.path.exists(path):
+            return path
+    return None
+
+opus_path = find_opus_lib()
+if opus_path:
+    os.environ['LD_LIBRARY_PATH'] = f"{opus_path}:{os.environ.get('LD_LIBRARY_PATH', '')}"
+
 # --- Configuração do Logging ---
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+# Filter para remover logs HTTP do Supabase e rate limiting
+class QuietFilter(logging.Filter):
+    def filter(self, record):
+        msg = record.getMessage()
+        if 'HTTP Request:' in msg:
+            return False
+        if 'rate limited' in msg.lower():
+            return False
+        return True
+
+# Configurar logging mais limpo
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+
+# Remover handlers existentes
+for h in root_logger.handlers[:]:
+    root_logger.removeHandler(h)
+
+# Criar handler customizado com filtro
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s', datefmt='%H:%M:%S'))
+handler.addFilter(QuietFilter())
+root_logger.addHandler(handler)
+
+# Reduzir verbosidade de bibliotecas
+logging.getLogger('discord.http').setLevel(logging.ERROR)
+logging.getLogger('discord.client').setLevel(logging.ERROR)
+logging.getLogger('urllib3').setLevel(logging.ERROR)
+logging.getLogger('asyncio').setLevel(logging.ERROR)
 
 # --- Carregamento das Variáveis de Ambiente ---
 try:
@@ -52,6 +96,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 intents.guilds = True
+intents.voice_states = True  # Necessário para sistema de música
 
 # --- Configuração do Bot Discord ---
 class MyBot(commands.Bot):
@@ -82,13 +127,17 @@ class MyBot(commands.Bot):
             'cogs.moderacao.filtros',
             'cogs.moderacao.logs',
             'cogs.moderacao.lock',
+            'cogs.moderacao.limpar',
             'cogs.moderacao.account_age',
             'cogs.loja.shop_manager',
             'cogs.loja.shop_user',
             'cogs.loja.inventario_command',
             'cogs.utilidades',  # Temporariamente desativado - requer libstdc++6
             'cogs.embed_command',
-            'cogs.ia.agent_ia'
+            'cogs.ia.agent_ia',
+            'cogs.downloads.download_command',
+            'cogs.downloads.auto_download',
+            'cogs.music.music_cog'
         ]
 
     async def update_xp(self, user: discord.Member, guild: discord.Guild, xp_change: int, is_message: bool = False) -> Optional[int]:
@@ -165,32 +214,37 @@ class MyBot(commands.Bot):
         emoji_map = {
             'cogs.ajuda': '❓', 
             'cogs.admin': '🔑',
-            'cogs.gerenciamento': '📋',
-            'cogs.painel_controle': '⚙️',
+            'cogs.gerenciamento': '⚙️',
+            'cogs.painel_controle': '🎛️',
             'cogs.social_diversao.dice_command': '🎲',
-            'cogs.social_diversao.poll_command': '📊',
-            'cogs.social_diversao.eventos': '🎉',
-            'cogs.administracao.autorole': '📝',
-            'cogs.suporte.hub_support': 'HUB',
-            'cogs.gamificacao.xp_system': '📈',
-            'cogs.gamificacao.rank_command': '🏆',
-            'cogs.gamificacao.rank_geral': '🌍',
-            'cogs.gamificacao.gerenciar_xp': '🔧',
+            'cogs.social_diversao.poll_command': '📋',
+            'cogs.social_diversao.eventos': '🎪',
+            'cogs.administracao.autorole': '👤',
+            'cogs.suporte.hub_support': '🎧',
+            'cogs.gamificacao.xp_system': '⭐',
+            'cogs.gamificacao.rank_command': '🥇',
+            'cogs.gamificacao.rank_geral': '🌟',
+            'cogs.gamificacao.gerenciar_xp': '💎',
             'cogs.gamificacao.daily_command': '🎁',
-            'cogs.gamificacao.transfer_xp': '💰',
-            'cogs.analise': '📡',
-            'cogs.loja.shop_manager': '🛒',
-            'cgs.loja.shop_user': '🛍️',
-            'cogs.loja.inventario_command': '🎒',
+            'cogs.gamificacao.transfer_xp': '🔄',
+            'cogs.analise': '📊',
             'cogs.moderacao.warns': '⚠️',
-            'cogs.moderacao.captcha': '🤖',
+            'cogs.moderacao.captcha': '🔐',
             'cogs.moderacao.antiraid': '🛡️',
-            'cogs.moderacao.filtros': '🔍',
-            'cogs.moderacao.logs': '➡️',
-            'cogs.moderacao.lock': '🔒',
-            'cogs.moderacao.account_age': '⏳',
-            'cogs.utilidades': '🔧',
-            'cogs.ia.agent_ia': '🤖'
+            'cogs.moderacao.filtros': '🧹',
+            'cogs.moderacao.logs': '📝',
+            'cogs.moderacao.lock': '🔐',
+            'cogs.moderacao.limpar': '🧹',
+            'cogs.moderacao.account_age': '📅',
+            'cogs.loja.shop_manager': '🛒',
+            'cogs.loja.shop_user': '🛍️',
+            'cogs.loja.inventario_command': '🎒',
+            'cogs.utilidades': '🛠️',
+            'cogs.embed_command': '📨',
+            'cogs.ia.agent_ia': '🧠',
+            'cogs.downloads.download_command': '⬇️',
+            'cogs.downloads.auto_download': '📥',
+            'cogs.music.music_cog': '🎵'
         }
         return emoji_map.get(cog_name, '📦')
 

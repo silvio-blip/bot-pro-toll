@@ -26,6 +26,9 @@ PyNaCl
 cryptography
 pyjwt
 
+# Music
+yt-dlp
+
 # Async & Web
 websockets<16
 strenum

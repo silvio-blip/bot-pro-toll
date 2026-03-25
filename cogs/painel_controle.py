@@ -12,6 +12,8 @@ from cogs.moderacao.antiraid import AntiRaidConfigModal
 from cogs.moderacao.captcha import CaptchaConfigModal
 from cogs.moderacao.warns import WarnsConfigModal
 from cogs.moderacao.logs import LogSettingsView
+from cogs.moderacao.limpar import LimparConfigModal
+from cogs.music.music_cog import MusicConfigModal
 from cogs.moderacao.filtros import (
     BadWordsConfigModal, InviteFilterConfigModal, LinkFilterConfigModal,
     AntiCapsConfigModal, AntiEmojiConfigModal, AntiSpamConfigModal
@@ -264,6 +266,7 @@ class ModeracaoSelect(ui.Select):
             SelectOption(label="Sistema Anti-Raid", value="antiraid", emoji="🛡️"),
             SelectOption(label="Verificação por Captcha", value="captcha", emoji="🤖"),
             SelectOption(label="Sistema de Avisos (Warns)", value="warns", emoji="⚠️"),
+            SelectOption(label="Limpar Mensagens", value="limpar", emoji="🧹"),
             SelectOption(label="Filtro de Palavras", value="bad_words", emoji="🤬"),
             SelectOption(label="Filtro de Convites", value="invites", emoji="🔗"),
             SelectOption(label="Filtro de Links", value="links", emoji="🌐"),
@@ -277,6 +280,22 @@ class ModeracaoSelect(ui.Select):
         choice = self.values[0]
         if choice == "logs":
             await i.response.edit_message(content="Configurando Logs:", embed=None, view=LogSettingsView(self.bot))
+            return
+        if choice == "limpar":
+            # Buscar configuração do limpar (da tabela server_configs)
+            config = {}
+            try:
+                response = self.bot.supabase_client.table("server_configs").select("cleaner_role_id", "limpar_max_messages", "limpar_enabled").eq("server_id", i.guild.id).execute()
+                if response.data and response.data[0]:
+                    data = response.data[0]
+                    config = {
+                        "role_id": data.get("cleaner_role_id"),
+                        "max_messages": data.get("limpar_max_messages", 100),
+                        "enabled": data.get("limpar_enabled", False)
+                    }
+            except:
+                pass
+            await i.response.send_modal(LimparConfigModal(self.bot, config=config))
             return
         cog_map = {"antiraid": "anti_raid", "captcha": "captcha", "warns": "warns", "bad_words": "bad_words", "invites": "invite_filter", "links": "link_filter", "caps": "anti_caps", "emojis": "anti_emoji", "spam": "anti_spam"}
         modals = {"antiraid": AntiRaidConfigModal, "captcha": CaptchaConfigModal, "warns": WarnsConfigModal, "bad_words": BadWordsConfigModal, "invites": InviteFilterConfigModal, "links": LinkFilterConfigModal, "caps": AntiCapsConfigModal, "emojis": AntiEmojiConfigModal, "spam": AntiSpamConfigModal}
@@ -383,6 +402,32 @@ class AgentIASettingsView(ui.View):
         self.add_item(AgentIASelect(bot))
         self.add_item(BackButton(bot, row=1))
 
+class MusicSelect(ui.Select):
+    def __init__(self, bot):
+        self.bot = bot
+        options = [
+            SelectOption(label="Configurações de Música", value="music_config", emoji="🎵")
+        ]
+        super().__init__(placeholder="Escolha uma opção...", options=options)
+    async def callback(self, i: Interaction):
+        config = {}
+        try:
+            response = self.bot.supabase_client.table("music_config").select("*").eq("server_guild_id", i.guild.id).execute()
+            if response.data and response.data[0]:
+                config = response.data[0]
+        except Exception as e:
+            logger.error(f"Erro ao buscar config de música: {e}")
+        await i.response.send_modal(MusicConfigModal(self.bot, config=config))
+
+
+class MusicSettingsView(ui.View):
+    def __init__(self, bot):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.add_item(MusicSelect(bot))
+        self.add_item(BackButton(bot, row=1))
+
+
 # --- View Principal do Painel (Correta e Funcional) ---
 class PainelView(ui.View):
     def __init__(self, bot):
@@ -412,6 +457,10 @@ class PainelView(ui.View):
     @ui.button(label="Agente IA", emoji="🤖", style=ButtonStyle.primary, custom_id="painel_ia_final_v4", row=1)
     async def ia_button(self, i: Interaction, button: ui.Button):
         await i.response.edit_message(content="🤖 **Agente IA** - Configure o agente:", embed=None, view=AgentIASettingsView(self.bot))
+
+    @ui.button(label="Música", emoji="🎵", style=ButtonStyle.blurple, custom_id="painel_music_final_v4", row=2)
+    async def music_button(self, i: Interaction, button: ui.Button):
+        await i.response.edit_message(content="🎵 **Música** - Configure o player:", embed=None, view=MusicSettingsView(self.bot))
 
 
 # --- Cog Principal ---
