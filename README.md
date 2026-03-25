@@ -71,14 +71,6 @@ Digite `/painel` (requer admin) para configurar:
 
 ---
 
-## 📊 Requisitos
-
-- Python 3.11+
-- Supabase (banco de dados)
-- discord.py
-
----
-
 ## 📄 Licença
 
 **Todos os direitos reservados.** 
