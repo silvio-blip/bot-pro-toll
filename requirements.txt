@@ -13,9 +13,9 @@ supafunc<0.7.0
 # IA & Imagem
 numpy==1.26.4
 Pillow
-rembg==2.0.50
-onnxruntime==1.16.0
-opencv-python-headless==4.9.0.80
+rembg
+onnxruntime
+opencv-python-headless
 
 # Google
 google-generativeai
