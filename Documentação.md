@@ -15,6 +15,8 @@ Este é um bot completo para Discord com várias funcionalidades:
 | ⬇️ **Downloads** | Baixa áudio de vídeos (YouTube, TikTok, etc) |
 | 🎉 **Diversão** | Enquetes, dados, eventos |
 | 📊 **Utilidades** | Remover fundo de imagens, ping, gráficos |
+| 🎫 **Suporte** | Sistema de tickets e hub de suporte |
+| 📢 **Denúncias** | Sistema de denúncias de usuários |
 
 ---
 
@@ -37,67 +39,113 @@ Antes de tudo, o administrador precisa registrar o servidor:
 
 ---
 
-## O que é cada Comando?
+## Todos os Comandos
 
 ### 🔧 Comandos Administrativos
 
-| Comando | O que faz |
+| Comando | Descrição |
 |---------|-----------|
 | `/painel` | 🟢 **O mais importante!** Abre o painel de configurações |
 | `/registrar` | 📝 Registra o servidor no bot |
 | `/verificar` | ✅ Confirma sua conta com código do e-mail |
+| `/mudar-senha` | 🔐 Altera sua senha de administrador |
+| `/desregistrar-servidor` | ❌ Remove todos os dados do servidor |
 | `/sync` | 🔄 Sincroniza os comandos com o Discord |
 | `/embed` | 💬 Cria mensagens bonitas formatadas |
 | `/setup-suporte` | 🎧 Configura o sistema de suporte |
+| `/setup-tickets` | 🎫 Cria o painel de tickets |
 
 ---
 
-### 🎮 Comandos para Todos
+### 🎮 Comandos de Gamificação
 
-| Comando | O que faz |
+| Comando | Descrição |
 |---------|-----------|
 | `/perfil` | 👤 Mostra seu nível, XP e cartão personalizado |
 | `/rank` | 🏆 Mostra o ranking dos membros com mais XP |
+| `/rank_geral` | 🌟 Ranking geral de XP do servidor |
 | `/top_atividade` | 📊 Mostra quem mais conversa |
 | `/daily` | 🎁 Ganha XP diário-grátis |
-| `/transferir-xp` | 💸 Envia XP para outro membro |
+| `/transferir` | 💸 Envia XP para outro membro |
+| `/gerenciar_xp` | 💎 Adiciona ou remove XP de um usuário (admin) |
+| `/adicionar_moedas` | ➕ Adiciona XP a um usuário (admin) |
+| `/remover_moedas` | ➖ Remove XP de um usuário (admin) |
+
+---
+
+### 🛒 Comandos da Loja
+
+| Comando | Descrição |
+|---------|-----------|
 | `/loja` | 🛒 Ver os itens disponíveis para comprar |
 | `/inventario` | 🎒 Ver o que você já comprou |
+| `/gerenciar_loja` | 🏪 Adicionar/editar/remover itens da loja (admin) |
+
+---
+
+### 🎲 Comandos de Diversão
+
+| Comando | Descrição |
+|---------|-----------|
 | `/dado` | 🎲 Lança um dado (pode escolher quantos lados) |
-| `/enquete` | 📋 Cria uma votação |
-| `/ping` | 📡 Ver se o bot está online e a latência |
-| `/crescimento` | 📈 Ver gráfico de crescimento do servidor |
+| `/enquete` | 📋 Cria uma votação com botões |
+| `/criar_evento` | 🎪 Cria um evento customizado |
 
 ---
 
 ### 🛡️ Comandos de Moderação
 
-| Comando | O que faz |
+| Comando | Descrição |
 |---------|-----------|
 | `/warn` | ⚠️ Advertir um membro |
-| `/limpar` | 🧹 Apagar mensagens |
+| `/limpar` | 🧹 Apagar mensagens (com opções de quantidade e usuário) |
 | `/lock` | 🔒 Bloquear um canal |
 | `/unlock` | 🔓 Desbloquear um canal |
+| `/denunciar` | 🚨 Denunciar um usuário |
 
 ---
 
 ### 🤖 Comandos de IA
 
-| Comando | O que faz |
+| Comando | Descrição |
 |---------|-----------|
 | `/ia` | 💬 Inicia um chat privado com IA |
 | `/ia-clear` | 🗑️ Limpa o histórico de conversa |
-| `/chat` | ⚡ Conversa rápida com IA |
 
 ---
 
 ### ⬇️ Comandos de Download
 
-| Comando | O que faz |
+| Comando | Descrição |
 |---------|-----------|
 | `/baixar` | 📥 Baixa o áudio de um vídeo |
 
 **Plataformas suportadas:** YouTube, TikTok, Instagram, Twitter/X, Facebook, Reddit, SoundCloud
+
+---
+
+### 📊 Comandos de Utilidades
+
+| Comando | Descrição |
+|---------|-----------|
+| `/ping` | 📡 Ver se o bot está online e a latência |
+| `/crescimento` | 📈 Ver gráfico de crescimento do servidor |
+
+---
+
+### 🎫 Comandos de Suporte
+
+| Comando | Descrição |
+|---------|-----------|
+| `/fechar-ticket` | 🔒 Fecha o ticket atual |
+
+---
+
+### ❓ Comandos de Ajuda
+
+| Comando | Descrição |
+|---------|-----------|
+| `/ajuda` | ℹ️ Mostra um painel de ajuda interativo |
 
 ---
 
@@ -229,7 +277,7 @@ O painel tem 6 botões principais:
 2. Preencha os campos:
 
 | Campo | O que é |
-|-------|--------|
+|-----|--------|
 | Nome | Nome do item |
 | Descrição | O que o item faz |
 | Preço | Custo em XP |
@@ -360,6 +408,22 @@ Nível 10 = 3000 XP
 
 ---
 
+### Como usar o Sistema de Tickets?
+
+1. Use `/setup-tickets` para criar o painel de tickets
+2. Membros clicam no botão para abrir um ticket
+3. Use `/fechar-ticket` para fechar quando resolvido
+
+---
+
+### Como usar o Sistema de Denúncias?
+
+1. Use `/denunciar` para denunciar um usuário
+2. Selecione o motivo e forneça detalhes
+3. A moderação recebe a denúncia
+
+---
+
 ## Perguntas Frequentes
 
 **O bot não responde?**
@@ -373,6 +437,9 @@ Nível 10 = 3000 XP
 
 **Como ganho XP?**
 → Conversando no chat (tem um cooldown) ou usando `/daily`
+
+**Como transferir XP?**
+→ Use `/transferir` e mencione o usuário
 
 ---
 
@@ -402,3 +469,13 @@ Uso diário:
 | XP não aumenta | Verifique configurações no `/painel` |
 | Filtros não funcionam | Ative no `/painel` → Moderação |
 | IA não responde | Configure a API no `/painel` → IA |
+
+---
+
+## Especificações Técnicas
+
+- **Linguagem:** Python
+- **Biblioteca:** discord.py
+- **Banco de Dados:** Supabase (PostgreSQL)
+- **Total de Comandos:** 37
+- **Total de Cogs:** 34
