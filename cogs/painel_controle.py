@@ -125,6 +125,63 @@ class LevelUpConfigModal(ui.Modal, title="Configuração de Níveis"):
         else:
             await i.followup.send("Configurações salvas.", ephemeral=True)
 
+class ReportsConfigModal(ui.Modal, title="Config. Sistema de Denúncias"):
+    def __init__(self, bot, config: dict):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.config = config
+        self.add_item(ui.TextInput(label="Ativar Sistema (sim/não)", default=str(config.get("enabled", "não")).lower(), placeholder="sim ou não"))
+        self.add_item(ui.TextInput(label="ID do Canal de Denúncias", default=str(config.get("channel_id", "")), placeholder="ID do canal para where vão as denúncias"))
+        self.add_item(ui.TextInput(label="Anonimato por Padrão (sim/não)", default=str(config.get("anonymous_default", "sim")).lower(), placeholder="sim ou não"))
+    
+    async def on_submit(self, i: Interaction):
+        await i.response.defer(ephemeral=True)
+        guild_id = i.guild.id
+        
+        enabled = self.children[0].value.strip().lower()
+        anonymous_default = self.children[2].value.strip().lower()
+        
+        if hasattr(self.bot, 'get_and_update_server_settings'):
+            def update_config(settings: dict):
+                settings.setdefault('reports', {})['enabled'] = enabled in ['sim', 'true', '1', 'yes', 'on']
+                settings.setdefault('reports', {})['channel_id'] = int(self.children[1].value.strip()) if self.children[1].value.strip().isdigit() else None
+                settings.setdefault('reports', {})['anonymous_default'] = anonymous_default in ['sim', 'true', '1', 'yes', 'on']
+            
+            success = await self.bot.get_and_update_server_settings(guild_id, update_config)
+            await i.followup.send("Configurações de Denúncias salvas!" if success else "Erro ao salvar!", ephemeral=True)
+        else:
+            await i.followup.send("Configurações salvas.", ephemeral=True)
+
+class InvitesConfigModal(ui.Modal, title="Config. Sistema de Convites"):
+    def __init__(self, bot, config: dict):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.config = config
+        self.add_item(ui.TextInput(label="Ativar Sistema (sim/não)", default=str(config.get("enabled", "não")).lower(), placeholder="sim ou não"))
+        self.add_item(ui.TextInput(label="Bônus para Convidado (moedas)", default=str(config.get("invitee_bonus", 50)), placeholder="Quantidade de moedas"))
+        self.add_item(ui.TextInput(label="Bônus para Convidante (moedas)", default=str(config.get("inviter_bonus", 25)), placeholder="Quantidade de moedas"))
+        self.add_item(ui.TextInput(label="Horas mínimas para validar", default=str(config.get("min_stay_hours", 24)), placeholder="Horas que o usuário deve permanecer"))
+        self.add_item(ui.TextInput(label="ID Canal de Notificações", default=str(config.get("notification_channel_id", "")), placeholder="ID do canal para notificações"))
+    
+    async def on_submit(self, i: Interaction):
+        await i.response.defer(ephemeral=True)
+        guild_id = i.guild.id
+        
+        enabled = self.children[0].value.strip().lower()
+        
+        if hasattr(self.bot, 'get_and_update_server_settings'):
+            def update_config(settings: dict):
+                settings.setdefault('invites', {})['enabled'] = enabled in ['sim', 'true', '1', 'yes', 'on']
+                settings.setdefault('invites', {})['invitee_bonus'] = int(self.children[1].value.strip() or 50)
+                settings.setdefault('invites', {})['inviter_bonus'] = int(self.children[2].value.strip() or 25)
+                settings.setdefault('invites', {})['min_stay_hours'] = int(self.children[3].value.strip() or 24)
+                settings.setdefault('invites', {})['notification_channel_id'] = int(self.children[4].value.strip()) if self.children[4].value.strip().isdigit() else None
+            
+            success = await self.bot.get_and_update_server_settings(guild_id, update_config)
+            await i.followup.send("Configurações de Convites salvas!" if success else "Erro ao salvar!", ephemeral=True)
+        else:
+            await i.followup.send("Configurações salvas.", ephemeral=True)
+
 class DailyRewardConfigModal(ui.Modal, title="Config. Recompensa Diária"):
     def __init__(self, bot, config: dict):
         super().__init__(timeout=None)
@@ -337,7 +394,8 @@ class ModeracaoSelect(ui.Select):
             SelectOption(label="Filtro de Links", value="links", emoji="🌐"),
             SelectOption(label="Filtro de Caps-Lock", value="caps", emoji="⬆️"),
             SelectOption(label="Filtro de Emojis", value="emojis", emoji="😀"),
-            SelectOption(label="Filtro de Spam", value="spam", emoji="🚫")
+            SelectOption(label="Filtro de Spam", value="spam", emoji="🚫"),
+            SelectOption(label="Sistema de Denúncias", value="reports", emoji="🚨")
         ]
         super().__init__(placeholder="Escolha um sistema de moderação...", options=options)
 
@@ -347,7 +405,6 @@ class ModeracaoSelect(ui.Select):
             await i.response.edit_message(content="Configurando Logs:", embed=None, view=LogSettingsView(self.bot))
             return
         if choice == "limpar":
-            # Buscar configuração do limpar (da tabela server_configs)
             config = {}
             try:
                 response = self.bot.supabase_client.table("server_configs").select("cleaner_role_id", "limpar_max_messages", "limpar_enabled").eq("server_id", i.guild.id).execute()
@@ -361,6 +418,10 @@ class ModeracaoSelect(ui.Select):
             except:
                 pass
             await i.response.send_modal(LimparConfigModal(self.bot, config=config))
+            return
+        if choice == "reports":
+            config = await get_specific_config(self.bot, i.guild.id, "reports")
+            await i.response.send_modal(ReportsConfigModal(self.bot, config=config))
             return
         cog_map = {"antiraid": "anti_raid", "captcha": "captcha", "warns": "warns", "bad_words": "bad_words", "invites": "invite_filter", "links": "link_filter", "caps": "anti_caps", "emojis": "anti_emoji", "spam": "anti_spam"}
         modals = {"antiraid": AntiRaidConfigModal, "captcha": CaptchaConfigModal, "warns": WarnsConfigModal, "bad_words": BadWordsConfigModal, "invites": InviteFilterConfigModal, "links": LinkFilterConfigModal, "caps": AntiCapsConfigModal, "emojis": AntiEmojiConfigModal, "spam": AntiSpamConfigModal}
@@ -397,13 +458,18 @@ class GamificacaoSelect(ui.Select):
         options = [
             SelectOption(label="Configurações de XP", value="xp_config", emoji="⚙️"), 
             SelectOption(label="Mensagem de Level Up", value="level_up", emoji="🎉"),
-            SelectOption(label="Recompensa Diária (/daily)", value="daily_reward", emoji="🎁")
+            SelectOption(label="Recompensa Diária (/daily)", value="daily_reward", emoji="🎁"),
+            SelectOption(label="Sistema de Convites", value="invites_config", emoji="📨")
         ]
         super().__init__(placeholder="Escolha uma opção de gamificação...", options=options)
     async def callback(self, i: Interaction):
         choice = self.values[0]
         config = await get_specific_config(self.bot, i.guild.id, 'gamification_xp')
         modals = {"xp_config": XpConfigModal, "level_up": LevelUpConfigModal, "daily_reward": DailyRewardConfigModal}
+        if choice == "invites_config":
+            invite_config = await get_specific_config(self.bot, i.guild.id, "invites")
+            await i.response.send_modal(InvitesConfigModal(self.bot, invite_config))
+            return
         if modal_class := modals.get(choice):
             await i.response.send_modal(modal_class(self.bot, config=config))
 
