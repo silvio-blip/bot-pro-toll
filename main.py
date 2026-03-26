@@ -8,6 +8,7 @@ from supabase import create_client, Client
 import logging
 import asyncio
 from typing import Dict, Any, Callable, Optional
+from datetime import datetime
 
 # --- Configurar LD_LIBRARY_PATH para Opus ---
 import glob
@@ -134,6 +135,29 @@ try:
     supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
     supabase_client.table('gamification_profiles').select('user_id').limit(1).execute()
     logging.info("[✅] Conexão com o Supabase e tabela de gamificação verificadas com sucesso.")
+    
+    # Verificar tabela de tickets
+    try:
+        supabase_client.table('tickets').select('id').limit(1).execute()
+        logging.info("[✅] Tabela 'tickets' verificada com sucesso.")
+    except Exception as e:
+        logging.warning("[⚠️] Tabela 'tickets' não encontrada. Sistema de tickets pode não funcionar.")
+        logging.warning("[💡] Para criar a tabela, execute no Supabase SQL Editor:")
+        logging.warning("""
+CREATE TABLE public.tickets (
+    id TEXT PRIMARY KEY,
+    guild_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    user_name TEXT NOT NULL,
+    channel_id BIGINT NOT NULL,
+    category TEXT NOT NULL,
+    description TEXT,
+    status TEXT DEFAULT 'open',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
+""")
 except Exception as e:
     logging.error(f"[❌] Falha ao inicializar ou conectar com o Supabase. Verifique a tabela 'gamification_profiles'. Erro: {e}")
     exit()
@@ -160,6 +184,7 @@ class MyBot(commands.Bot):
             'cogs.social_diversao.eventos',
             'cogs.administracao.autorole',
             'cogs.suporte.hub_support',
+            'cogs.suporte.ticket_system',
             'cogs.gamificacao.xp_system',
             'cogs.gamificacao.rank_command',
             'cogs.gamificacao.rank_geral',
@@ -268,6 +293,7 @@ class MyBot(commands.Bot):
             'cogs.social_diversao.eventos': '🎪',
             'cogs.administracao.autorole': '👤',
             'cogs.suporte.hub_support': '🎧',
+            'cogs.suporte.ticket_system': '🎫',
             'cogs.gamificacao.xp_system': '⭐',
             'cogs.gamificacao.rank_command': '🥇',
             'cogs.gamificacao.rank_geral': '🌟',

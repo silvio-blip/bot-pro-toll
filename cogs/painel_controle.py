@@ -468,6 +468,58 @@ class AgentIASettingsView(ui.View):
         self.add_item(BackButton(bot, row=1))
 
 # --- View Principal do Painel (Correta e Funcional) ---
+# --- Configuração de Tickets ---
+class TicketsConfigModal(ui.Modal, title="Configurar Tickets"):
+    def __init__(self, bot, config: dict):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.config = config
+        self.add_item(ui.TextInput(label="ID da Categoria dos Tickets", default=str(config.get("category_id", "")), placeholder="ID numérico da categoria"))
+        self.add_item(ui.TextInput(label="ID do Cargo de Notificação", default=str(config.get("notify_role_id", "")), placeholder="ID numérico do cargo (opcional)"))
+        self.add_item(ui.TextInput(label="ID do Cargo de Suporte", default=str(config.get("support_role_id", "")), placeholder="ID numérico do cargo (pode fechar tickets)"))
+
+    async def on_submit(self, i: Interaction):
+        await i.response.defer(ephemeral=True)
+        category_id = self.children[0].value.strip()
+        notify_role_id = self.children[1].value.strip()
+        support_role_id = self.children[2].value.strip()
+        
+        try:
+            if hasattr(self.bot, 'get_and_update_server_settings'):
+                def update_config(settings: dict):
+                    settings.setdefault('tickets', {})['category_id'] = int(category_id) if category_id.isdigit() else None
+                    settings.setdefault('tickets', {})['notify_role_id'] = int(notify_role_id) if notify_role_id.isdigit() else None
+                    settings.setdefault('tickets', {})['support_role_id'] = int(support_role_id) if support_role_id.isdigit() else None
+                    settings.setdefault('tickets', {})['enabled'] = True
+                
+                success = await self.bot.get_and_update_server_settings(i.guild.id, update_config)
+                await i.followup.send("✅ Configurações de Tickets salvas!" if success else "❌ Erro ao salvar.", ephemeral=True)
+            else:
+                await i.followup.send("❌ Função de configuração não disponível.", ephemeral=True)
+        except Exception as e:
+            await i.followup.send(f"❌ Erro: {e}", ephemeral=True)
+
+class TicketsSelect(ui.Select):
+    def __init__(self, bot):
+        self.bot = bot
+        options = [
+            SelectOption(label="Configurar Tickets", value="tickets_config", emoji="🎫")
+        ]
+        super().__init__(placeholder="Escolha uma opção...", options=options)
+    
+    async def callback(self, i: Interaction):
+        choice = self.values[0]
+        if choice == "tickets_config":
+            config = await get_specific_config(self.bot, i.guild.id, "tickets")
+            await i.response.send_modal(TicketsConfigModal(self.bot, config))
+
+class TicketsSettingsView(ui.View):
+    def __init__(self, bot):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.add_item(TicketsSelect(bot))
+        self.add_item(BackButton(bot, row=1))
+
 class PainelView(ui.View):
     def __init__(self, bot):
         super().__init__(timeout=None)
@@ -496,6 +548,10 @@ class PainelView(ui.View):
     @ui.button(label="Agente IA", emoji="🤖", style=ButtonStyle.primary, custom_id="painel_ia_final_v4", row=1)
     async def ia_button(self, i: Interaction, button: ui.Button):
         await i.response.edit_message(content="🤖 **Agente IA** - Configure o agente:", embed=None, view=AgentIASettingsView(self.bot))
+
+    @ui.button(label="Tickets", emoji="🎫", style=ButtonStyle.secondary, custom_id="painel_tickets_final_v4", row=1)
+    async def tickets_button(self, i: Interaction, button: ui.Button):
+        await i.response.edit_message(content="🎫 **Tickets** - Configure o sistema de tickets:", embed=None, view=TicketsSettingsView(self.bot))
 
 
 # --- Cog Principal ---
