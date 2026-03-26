@@ -67,6 +67,34 @@ logging.getLogger('discord.client').setLevel(logging.ERROR)
 logging.getLogger('urllib3').setLevel(logging.ERROR)
 logging.getLogger('asyncio').setLevel(logging.ERROR)
 
+# --- Check de Servidor Registrado ---
+REGISTERED_EXCEPTIONS = {"registrar", "verificar", "ajuda", "ping", "desregistrar-servidor", "mudar-senha"}
+
+async def check_server_registered(interaction: discord.Interaction) -> bool:
+    guild = interaction.guild
+    if not guild:
+        return False
+    try:
+        response = interaction.client.supabase_client.table("servers").select("id").eq("discord_guild_id", guild.id).execute()
+        return len(response.data) > 0
+    except Exception:
+        return False
+
+async def registered_server_check(interaction: discord.Interaction) -> bool:
+    command_name = interaction.command.name if interaction.command else ""
+    if command_name in REGISTERED_EXCEPTIONS:
+        return True
+    
+    if not await check_server_registered(interaction):
+        await interaction.response.send_message(
+            "❌ Este servidor precisa estar registrado para usar comandos do bot.\n\n"
+            "⚠️ **Apenas administradores podem registrar o servidor.**\n"
+            "Use `/registrar` para registrar (você precisa ser dono do servidor).",
+            ephemeral=True
+        )
+        return False
+    return True
+
 # --- Carregamento das Variáveis de Ambiente ---
 try:
     # Primeiro, verifica se as variáveis já estão no ambiente (Railway/Vercel)
@@ -215,6 +243,7 @@ class MyBot(commands.Bot):
                 return False
 
     async def setup_hook(self):
+        self.tree.interaction_check = registered_server_check
         logging.info('--- Carregando Cogs ---')
         for cog in self.initial_cogs:
             try:

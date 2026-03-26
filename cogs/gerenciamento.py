@@ -9,7 +9,7 @@ import random
 import bcrypt
 
 # --- Funções de Utilidade ---
-def gerar_codigo(tamanho=8): return ''.join(random.choices(string.ascii_uppercase + string.digits, k=tamanho))
+def gerar_codigo(tamanho=15): return ''.join(random.choices(string.ascii_letters + string.digits, k=tamanho))
 def hash_senha(senha: str) -> str: return bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 def verificar_senha(senha: str, hashed: str) -> bool: return bcrypt.checkpw(senha.encode('utf-8'), hashed.encode('utf-8'))
 
@@ -172,6 +172,99 @@ class PasswordConfirmationModal(ui.Modal, title="Confirme sua Identidade"):
             await interaction.followup.send("❌ Ocorreu um erro ao registrar este servidor.", ephemeral=True)
 
 
+class ServerUnregisterModal(ui.Modal, title="Desregistrar Servidor"):
+    def __init__(self, cog: 'Gerenciamento'):
+        super().__init__(timeout=None)
+        self.cog = cog
+        self.add_item(ui.TextInput(
+            label="ID do Servidor", 
+            style=TextStyle.short, 
+            placeholder="Ex: 123456789012345678",
+            required=True
+        ))
+        self.add_item(ui.TextInput(
+            label="Sua Senha",
+            style=TextStyle.short,
+            placeholder="Digite sua senha para confirmar",
+            required=True
+        ))
+
+    async def on_submit(self, interaction: Interaction):
+        await interaction.response.defer(ephemeral=True)
+        
+        try:
+            guild_id_str = self.children[0].value.strip()
+            senha = self.children[1].value
+            
+            if not guild_id_str.isdigit():
+                await interaction.followup.send("❌ ID do servidor inválido. Deve ser um número.", ephemeral=True)
+                return
+            
+            guild_id = int(guild_id_str)
+            
+            profile_res = self.cog.supabase.table("profiles").select("id, password_hash").eq("discord_user_id", interaction.user.id).execute().data
+            if not profile_res:
+                await interaction.followup.send("❌ Você não possui uma conta registrada.", ephemeral=True)
+                return
+            
+            profile = profile_res[0]
+            profile_id = profile['id']
+            profile_hash = profile['password_hash']
+            
+            if not verificar_senha(senha, profile_hash):
+                await interaction.followup.send("❌ Senha incorreta.", ephemeral=True)
+                return
+            
+            server_res = self.cog.supabase.table("servers").select("id").eq("discord_guild_id", guild_id).eq("owner_profile_id", profile_id).execute()
+            if not server_res.data:
+                await interaction.followup.send("❌ Este servidor não está registrado na sua conta ou o ID está incorreto.", ephemeral=True)
+                return
+            
+            self.cog.supabase.table("servers").delete().eq("discord_guild_id", guild_id).execute()
+            
+            self.cog.supabase.table("server_configurations").delete().eq("server_guild_id", guild_id).execute()
+            
+            self.cog.supabase.table("gamification_profiles").delete().eq("guild_id", guild_id).execute()
+            
+            try:
+                self.cog.supabase.table("shop_purchases").delete().eq("guild_id", guild_id).execute()
+            except Exception:
+                pass
+            
+            try:
+                self.cog.supabase.table("ia_conversations").delete().eq("guild_id", guild_id).execute()
+            except Exception:
+                pass
+            
+            try:
+                self.cog.supabase.table("warns").delete().eq("guild_id", guild_id).execute()
+            except Exception:
+                pass
+            
+            try:
+                self.cog.supabase.table("event_participants").delete().eq("guild_id", guild_id).execute()
+            except Exception:
+                pass
+            
+            logging.info(f"Usuário {interaction.user.id} desregistrou o servidor {guild_id}")
+            await interaction.followup.send(
+                f"✅ **Servidor removido com sucesso!**\n\n"
+                f"Todos os dados deste servidor foram apagados:\n"
+                f"• Registro do servidor\n"
+                f"• Configurações\n"
+                f"• XP e níveis dos membros\n"
+                f"• Itens da loja\n"
+                f"• Histórico de IA\n"
+                f"• Advertências\n\n"
+                f"⚠️ Você pode registrar novamente com `/registrar` se desejar.",
+                ephemeral=True
+            )
+            
+        except Exception as e:
+            logging.error(f"Erro ao desregistrar servidor: {e}")
+            await interaction.followup.send("❌ Ocorreu um erro ao processar sua solicitação.", ephemeral=True)
+
+
 # --- COG DE GERENCIAMENTO ---
 class Gerenciamento(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -232,6 +325,24 @@ class Gerenciamento(commands.Cog):
         except Exception as e:
             logging.error(f"Erro no comando /mudar-senha: {e}")
             await interaction.response.send_message("❌ Ocorreu um erro ao iniciar o processo de mudança de senha.", ephemeral=True)
+
+    @app_commands.command(name="desregistrar-servidor", description="[Dono do Servidor] Remove todos os dados do servidor do bot.")
+    async def desregistrar_servidor(self, interaction: Interaction):
+        if interaction.user.id != interaction.guild.owner_id:
+            await interaction.response.send_message("❌ Apenas o dono do servidor pode usar este comando.", ephemeral=True)
+            return
+        
+        try:
+            profile_res = self.supabase.table("profiles").select("id").eq("discord_user_id", interaction.user.id).execute().data
+            if not profile_res:
+                await interaction.response.send_message("❌ Você não possui uma conta de administrador registrada. Use `/registrar` primeiro.", ephemeral=True)
+                return
+            
+            await interaction.response.send_modal(ServerUnregisterModal(self))
+        
+        except Exception as e:
+            logging.error(f"Erro no comando /desregistrar-servidor: {e}")
+            await interaction.response.send_message("❌ Ocorreu um erro ao processar sua solicitação.", ephemeral=True)
 
     @registrar.error
     async def on_registrar_error(self, interaction: Interaction, error: app_commands.AppCommandError):

@@ -87,16 +87,16 @@ async def process_purchase(interaction: Interaction, item: dict):
 
 # --- Views e Selects da Loja ---
 class ConfirmPurchaseView(ui.View):
-    def __init__(self, bot: commands.Bot, item: dict):
+    def __init__(self, bot: commands.Bot, item: dict, points_name: str = "XP"):
         super().__init__(timeout=60)
         self.bot = bot
         self.item = item
+        self.points_name = points_name
 
     @ui.button(label="Confirmar Compra", style=ButtonStyle.success)
     async def confirm_button(self, interaction: Interaction, button: ui.Button):
         await interaction.response.defer(ephemeral=True, thinking=True)
         
-        # <<< CORREÇÃO APLICADA AQUI >>>
         already_owns = await check_if_user_owns_item(self.bot, interaction.guild.id, interaction.user.id, self.item['id'])
         if already_owns:
             await interaction.followup.send("Você já possui este item no seu inventário!", ephemeral=True)
@@ -105,7 +105,7 @@ class ConfirmPurchaseView(ui.View):
 
         user_xp = await get_user_xp(self.bot, interaction.guild.id, interaction.user.id)
         if user_xp < self.item['price']:
-            await interaction.followup.send("Você não tem mais XP suficiente.", ephemeral=True)
+            await interaction.followup.send(f"Você não tem mais {self.points_name} suficiente.", ephemeral=True)
             self.stop()
             return
 
@@ -132,10 +132,11 @@ class ConfirmPurchaseView(ui.View):
         await interaction.response.edit_message(content="Compra cancelada.", view=None, embed=None)
 
 class ShopPurchaseSelect(ui.Select):
-    def __init__(self, bot: commands.Bot, items: list, user_xp: int):
+    def __init__(self, bot: commands.Bot, items: list, user_xp: int, points_name: str = "XP"):
         self.bot = bot
         self.items_map = {str(item['id']): item for item in items}
-        options = [SelectOption(label=f"{item['name']} - {item['price']} XP", value=str(item['id']), description=item['description'][:100], emoji="✅" if user_xp >= item['price'] else "❌") for item in items]
+        self.points_name = points_name
+        options = [SelectOption(label=f"{item['name']} - {item['price']} {points_name}", value=str(item['id']), description=item['description'][:100], emoji="✅" if user_xp >= item['price'] else "❌") for item in items]
         if not options: options.append(SelectOption(label="A loja está vazia.", value="disabled"))
         super().__init__(placeholder="Selecione um item para comprar...", options=options, disabled=not items)
 
@@ -146,21 +147,21 @@ class ShopPurchaseSelect(ui.Select):
 
         user_xp = await get_user_xp(self.bot, interaction.guild.id, interaction.user.id)
         if user_xp < item['price']:
-            return await interaction.response.send_message(f"Você precisa de {item['price']} XP, mas só tem {user_xp} XP.", ephemeral=True)
+            return await interaction.response.send_message(f"Você precisa de {item['price']} {self.points_name}, mas só tem {user_xp} {self.points_name}.", ephemeral=True)
 
-        embed = Embed(title="Confirmação de Compra", description=f"Você tem certeza que deseja comprar **{item['name']}** por **{item['price']}** XP?", color=discord.Color.yellow())
+        embed = Embed(title="Confirmação de Compra", description=f"Você tem certeza que deseja comprar **{item['name']}** por **{item['price']}** {self.points_name}?", color=discord.Color.yellow())
         image_url = get_image_url_from_data(item.get('item_data'))
         if image_url:
             if item.get('item_type') == 'fundo_perfil': embed.set_image(url=image_url)
             elif item.get('item_type') == 'avatar_perfil': embed.set_thumbnail(url=image_url)
 
-        view = ConfirmPurchaseView(self.bot, item)
+        view = ConfirmPurchaseView(self.bot, item, self.points_name)
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 class ShopView(ui.View):
-    def __init__(self, bot, items, user_xp):
+    def __init__(self, bot, items, user_xp, points_name: str = "XP"):
         super().__init__(timeout=180)
-        self.add_item(ShopPurchaseSelect(bot, items, user_xp))
+        self.add_item(ShopPurchaseSelect(bot, items, user_xp, points_name))
 
 class ShopUserCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -170,13 +171,17 @@ class ShopUserCog(commands.Cog):
     async def loja(self, interaction: Interaction):
         await interaction.response.defer(ephemeral=True)
         try:
+            settings_response = self.bot.supabase_client.table("server_configurations").select("settings").eq("server_guild_id", interaction.guild.id).execute()
+            settings = settings_response.data[0].get('settings', {}) if settings_response.data else {}
+            points_name = settings.get('gamification_xp', {}).get('points_name', 'XP')
+            
             items_response = self.bot.supabase_client.table("loja_items").select("*").eq("guild_id", interaction.guild.id).eq("is_active", True).order("price").execute()
             items = items_response.data
             user_xp = await get_user_xp(self.bot, interaction.guild.id, interaction.user.id)
-            embed = Embed(title="🛒 Loja do Servidor", description="Use seus pontos (XP) para comprar vantagens exclusivas!\nSelecione um item no menu abaixo.", color=discord.Color.blue())
-            embed.add_field(name="Seu Saldo", value=f"**{user_xp}** XP", inline=False)
+            embed = Embed(title="🛒 Loja do Servidor", description=f"Use seus pontos ({points_name}) para comprar vantagens exclusivas!\nSelecione um item no menu abaixo.", color=discord.Color.blue())
+            embed.add_field(name="Seu Saldo", value=f"**{user_xp}** {points_name}", inline=False)
             if not items: embed.description = "A loja ainda está vazia."
-            view = ShopView(self.bot, items, user_xp)
+            view = ShopView(self.bot, items, user_xp, points_name)
             await interaction.followup.send(embed=embed, view=view, ephemeral=True)
         except Exception as e:
             logging.error(f"Erro ao abrir a loja: {e}")
