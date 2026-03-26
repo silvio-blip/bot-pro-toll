@@ -33,7 +33,17 @@ async def get_specific_config(bot, guild_id: int, config_key: str) -> dict:
         if not hasattr(bot, 'supabase_client'): return {}
         response = bot.supabase_client.table("server_configurations").select("settings").eq("server_guild_id", guild_id).execute()
         if response.data:
-            return response.data[0].get('settings', {}).get(config_key, {})
+            all_settings = response.data[0].get('settings', {})
+            # Se a chave existe diretamente, retorna
+            if config_key in all_settings:
+                return all_settings.get(config_key, {})
+            # Se não, verifica se está dentro de uma sub-chave (ex: gamification_xp)
+            for key, value in all_settings.items():
+                if isinstance(value, dict) and config_key in value:
+                    return value.get(config_key, {})
+            # Retorna a chave principal se for gamification_xp
+            if config_key == "gamification_xp":
+                return all_settings.get("gamification_xp", {})
     except Exception as e:
         logger.error(f"Erro ao buscar config de {config_key} para o servidor {guild_id}: {e}", exc_info=True)
     return {}
@@ -71,20 +81,49 @@ class XpConfigModal(ui.Modal, title="Configurações Gerais de XP"):
         super().__init__(timeout=None)
         self.bot = bot
         self.config = config
+        self.add_item(ui.TextInput(label="Ativar Sistema (sim/não)", default=config.get("enabled", True)))
         self.add_item(ui.TextInput(label="Nome dos Pontos", default=config.get("points_name", "XP")))
         self.add_item(ui.TextInput(label="Cooldown (segundos)", default=str(config.get("cooldown_seconds", 60))))
         self.add_item(ui.TextInput(label="XP Mínimo por Mensagem", default=str(config.get("xp_min", 5))))
         self.add_item(ui.TextInput(label="XP Máximo por Mensagem", default=str(config.get("xp_max", 15))))
-    async def on_submit(self, i: Interaction): await i.response.send_message("Configurações salvas.", ephemeral=True)
+    async def on_submit(self, i: Interaction):
+        await i.response.defer(ephemeral=True)
+        guild_id = i.guild.id
+        
+        if hasattr(self.bot, 'get_and_update_server_settings'):
+            def update_config(settings: dict):
+                enabled_val = self.children[0].value.strip().lower()
+                settings.setdefault('gamification_xp', {})['enabled'] = enabled_val in ['sim', 'true', '1', 'yes', 'on']
+                settings.setdefault('gamification_xp', {})['points_name'] = self.children[1].value.strip()
+                settings.setdefault('gamification_xp', {})['cooldown_seconds'] = int(self.children[2].value.strip() or 60)
+                settings.setdefault('gamification_xp', {})['xp_min'] = int(self.children[3].value.strip() or 5)
+                settings.setdefault('gamification_xp', {})['xp_max'] = int(self.children[4].value.strip() or 15)
+            
+            success = await self.bot.get_and_update_server_settings(guild_id, update_config)
+            await i.followup.send("Configurações salvas!" if success else "Erro ao salvar!", ephemeral=True)
+        else:
+            await i.followup.send("Configurações salvas.", ephemeral=True)
 
 class LevelUpConfigModal(ui.Modal, title="Configuração de Níveis"):
     def __init__(self, bot, config: dict):
         super().__init__(timeout=None)
         self.bot = bot
         self.config = config
-        self.add_item(ui.TextInput(label="XP Base para Nível", default=str(config.get("xp_per_level_base", 300))))
-        self.add_item(ui.TextInput(label="Mensagem de Level Up", style=TextStyle.long, default=config.get("level_up_message", "🎉 Parabéns {mention}, você alcançou o **Nível {level}**! 🎉")))
-    async def on_submit(self, i: Interaction): await i.response.send_message("Configurações salvas.", ephemeral=True)
+        self.add_item(ui.TextInput(label="XP Base para Nível (XP para cada nível)", default=str(config.get("xp_per_level_base", 300))))
+        self.add_item(ui.TextInput(label="Mensagem de Level Up", style=TextStyle.long, default=config.get("level_up_message", "🎉 Parabéns {mention}, você alcançou o **Nível {level}** no servidor {guild}! 🎉")))
+    async def on_submit(self, i: Interaction):
+        await i.response.defer(ephemeral=True)
+        guild_id = i.guild.id
+        
+        if hasattr(self.bot, 'get_and_update_server_settings'):
+            def update_config(settings: dict):
+                settings.setdefault('gamification_xp', {})['xp_per_level_base'] = int(self.children[0].value.strip() or 300)
+                settings.setdefault('gamification_xp', {})['level_up_message'] = self.children[1].value.strip()
+            
+            success = await self.bot.get_and_update_server_settings(guild_id, update_config)
+            await i.followup.send("Configurações salvas!" if success else "Erro ao salvar!", ephemeral=True)
+        else:
+            await i.followup.send("Configurações salvas.", ephemeral=True)
 
 class DailyRewardConfigModal(ui.Modal, title="Config. Recompensa Diária"):
     def __init__(self, bot, config: dict):
@@ -94,16 +133,43 @@ class DailyRewardConfigModal(ui.Modal, title="Config. Recompensa Diária"):
         self.add_item(ui.TextInput(label="Cooldown do /daily (horas)", default=str(config.get("daily_cooldown_hours", 23))))
         self.add_item(ui.TextInput(label="XP Mínimo do /daily", default=str(config.get("daily_xp_min", 50))))
         self.add_item(ui.TextInput(label="XP Máximo do /daily", default=str(config.get("daily_xp_max", 200))))
-    async def on_submit(self, i: Interaction): await i.response.send_message("Configurações salvas.", ephemeral=True)
+    async def on_submit(self, i: Interaction):
+        await i.response.defer(ephemeral=True)
+        guild_id = i.guild.id
+        
+        if hasattr(self.bot, 'get_and_update_server_settings'):
+            def update_config(settings: dict):
+                settings.setdefault('gamification_xp', {})['daily_cooldown_hours'] = int(self.children[0].value.strip() or 23)
+                settings.setdefault('gamification_xp', {})['daily_xp_min'] = int(self.children[1].value.strip() or 50)
+                settings.setdefault('gamification_xp', {})['daily_xp_max'] = int(self.children[2].value.strip() or 200)
+            
+            success = await self.bot.get_and_update_server_settings(guild_id, update_config)
+            await i.followup.send("Configurações salvas!" if success else "Erro ao salvar!", ephemeral=True)
+        else:
+            await i.followup.send("Configurações salvas.", ephemeral=True)
 
 class WelcomeConfigModal(ui.Modal, title="Configuração de Boas-Vindas"):
     def __init__(self, bot, config: dict):
         super().__init__(timeout=None)
         self.bot = bot
         self.config = config
-        self.add_item(ui.TextInput(label="Mensagem de Boas-Vindas", style=TextStyle.long, default=config.get("message", "Bem-vindo(a) {mention} ao servidor {server}!")))
-        self.add_item(ui.TextInput(label="ID do Canal de Boas-Vindas", default=config.get("channel_id", "")))
-    async def on_submit(self, i: Interaction): await i.response.send_message("Configurações salvas.", ephemeral=True)
+        self.add_item(ui.TextInput(label="Mensagem de Boas-Vindas", style=TextStyle.long, default=config.get("message", "Bem-vindo(a) {mention} ao servidor {guild}!")))
+        self.add_item(ui.TextInput(label="ID do Canal de Boas-Vindas", default=str(config.get("channel_id", ""))))
+    async def on_submit(self, i: Interaction):
+        await i.response.defer(ephemeral=True)
+        guild_id = i.guild.id
+        channel_id_str = self.children[1].value.strip()
+        channel_id = int(channel_id_str) if channel_id_str.isdigit() else None
+        
+        if hasattr(self.bot, 'get_and_update_server_settings'):
+            def update_config(settings: dict):
+                settings.setdefault('welcome_message', {})['message'] = self.children[0].value.strip()
+                settings.setdefault('welcome_message', {})['channel_id'] = channel_id
+            
+            success = await self.bot.get_and_update_server_settings(guild_id, update_config)
+            await i.followup.send("Configurações salvas!" if success else "Erro ao salvar!", ephemeral=True)
+        else:
+            await i.followup.send("Configurações salvas.", ephemeral=True)
 
 class AgentIAConfigModal(ui.Modal, title="Configuração do Agente IA"):
     def __init__(self, bot, config: dict):

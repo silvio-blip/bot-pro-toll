@@ -1,500 +1,404 @@
 # 📚 Documentação do Bot Discord
 
-## 📋 Índice
-1. [Visão Geral](#1-visão-gerais)
-2. [Pré-requisitos](#2-pré-requisitos)
-3. [Primeiro Passo: Registro](#3-primeiro-passo-registro)
-4. [Painel de Controle](#4-painel-de-controle)
-5. [Comandos](#5-comandos)
-6. [Sistemas Automáticos](#6-sistemas-automáticos)
-7. [Loja e Gamificação](#7-loja-e-gamificação)
-8. [IA e Downloads](#8-ia-e-downloads)
+---
+
+## O que é este Bot?
+
+Este é um bot completo para Discord com várias funcionalidades:
+
+| Sistema | O que faz |
+|---------|-----------|
+| 🛡️ **Moderação** | Protege o servidor com filtros, warns e muito mais |
+| ⭐ **Gamificação** | Sistema de XP e níveis para engajar membros |
+| 🛒 **Loja** | Loja virtual onde membros compram itens com XP |
+| 🤖 **IA** | Chat com Inteligência Artificial |
+| ⬇️ **Downloads** | Baixa áudio de vídeos (YouTube, TikTok, etc) |
+| 🎉 **Diversão** | Enquetes, dados, eventos |
+| 📊 **Utilidades** | Remover fundo de imagens, ping, gráficos |
 
 ---
 
-## 1. Visão Geral
+## Primeiro Passo: Como Começar
 
-Este é um bot Discord completo com as seguintes funcionalidades:
+### 1. Registrar o Servidor
 
-| Categoria | Funcionalidades |
-|-----------|----------------|
-| **Moderação** | Warns, filtros, logs, anti-raid, captcha, lock |
-| **Gamificação** | XP, níveis, ranks, daily, transferências |
-| **Loja** | Compra de itens com XP, inventário |
-| **IA** | Agente conversacional com múltiplos provedores |
-| **Downloads** | Download de áudio (TikTok, YouTube, Instagram) |
-| **Social** | Enquetes, dados, eventos |
-| **Utilidades** | Remover fundo, ping, crescimento |
-
----
-
-## 2. Pré-requisitos
-
-### Variáveis de Ambiente Necessárias
-O bot requer as seguintes variáveis de ambiente:
-
-```
-DISCORD_TOKEN=seu_token_do_bot
-SUPABASE_URL=sua_url_do_supabase
-SUPABASE_KEY=sua_chave_do_supabase
-```
-
-### Permissões do Bot
-O bot precisa das seguintes permissões do Discord:
-- `Gerenciar Mensagens`
-- `Gerenciar Canais`
-- `Gerenciar Cargos`
-- `Expulsar Membros`
-- `Banir Membros`
-- `Enviar Mensagens`
-- `Ver Mensagens`
-- `Anexar Arquivos`
-- **Intents**: Members, Message Content, Guilds
-
----
-
-## 3. Primeiro Passo: Registro
-
-### 3.1 Registrar Servidor
-
-Antes de usar qualquer comando, o administrador deve registrar o servidor:
+Antes de tudo, o administrador precisa registrar o servidor:
 
 ```
 /registrar
 ```
 
 **O que acontece:**
-1. O bot solicita um e-mail para vinculação
-2. Envia um código de verificação por e-mail
-3. O admin deve verificar com `/verificar`
+1. O bot pede seu e-mail
+2. Envia um código de verificação
+3. Você verifica com `/verificar`
 
-### 3.2 Alterar Senha (Opcional)
-
-```
-/mudar-senha
-```
-
-Permite alterar a senha de administrador do servidor.
+**Pronto!** Agora pode usar todos os comandos.
 
 ---
 
-## 4. Painel de Controle
+## O que é cada Comando?
 
-O **Painel de Controle** (`/painel`) é o sistema central de configuração. Todos os sistemas podem ser configurados aqui.
+### 🔧 Comandos Administrativos
 
-### 4.1 Acessar o Painel
-
-```
-/painel
-```
-
-> ⚠️ **Requer permissão de administrador**
-
-O painel possui botões organizados por categoria:
-
-| Botão | Categoria |
-|-------|-----------|
-| 🛡️ Moderação | Configurações de moderação |
-| 👑 Administração | Auto-role |
-| 📈 Gamificação | XP, níveis, daily |
-| 🎉 Social & Diversão | Boas-vindas, eventos |
-| 🛒 Loja | Gerenciar itens |
-| 🤖 Agente IA | Configurações de IA |
+| Comando | O que faz |
+|---------|-----------|
+| `/painel` | 🟢 **O mais importante!** Abre o painel de configurações |
+| `/registrar` | 📝 Registra o servidor no bot |
+| `/verificar` | ✅ Confirma sua conta com código do e-mail |
+| `/sync` | 🔄 Sincroniza os comandos com o Discord |
+| `/embed` | 💬 Cria mensagens bonitas formatadas |
+| `/setup-suporte` | 🎧 Configura o sistema de suporte |
 
 ---
 
-### 4.2 🛡️ Moderação
+### 🎮 Comandos para Todos
 
-#### Log de Entrada e Saída
-| Configuração | Descrição |
-|--------------|-----------|
-| Canal de Logs | Canal onde as mensagens de entrada/saída serão enviadas |
-| Mensagem de Entrada | Mensagem personalizada quando alguém entra (use `{member}`, `{member.mention}`, `{guild}`) |
-| Mensagem de Saída | Mensagem personalizada quando alguém sai |
-| Imagem de Entrada | URL de imagem opcional para embed de entrada |
-| Imagem de Saída | URL de imagem opcional para embed de saída |
+| Comando | O que faz |
+|---------|-----------|
+| `/perfil` | 👤 Mostra seu nível, XP e cartão personalizado |
+| `/rank` | 🏆 Mostra o ranking dos membros com mais XP |
+| `/top_atividade` | 📊 Mostra quem mais conversa |
+| `/daily` | 🎁 Ganha XP diário-grátis |
+| `/transferir-xp` | 💸 Envia XP para outro membro |
+| `/loja` | 🛒 Ver os itens disponíveis para comprar |
+| `/inventario` | 🎒 Ver o que você já comprou |
+| `/dado` | 🎲 Lança um dado (pode escolher quantos lados) |
+| `/enquete` | 📋 Cria uma votação |
+| `/ping` | 📡 Ver se o bot está online e a latência |
+| `/crescimento` | 📈 Ver gráfico de crescimento do servidor |
 
-**Variáveis disponíveis:**
+---
+
+### 🛡️ Comandos de Moderação
+
+| Comando | O que faz |
+|---------|-----------|
+| `/warn` | ⚠️ Advertir um membro |
+| `/limpar` | 🧹 Apagar mensagens |
+| `/lock` | 🔒 Bloquear um canal |
+| `/unlock` | 🔓 Desbloquear um canal |
+
+---
+
+### 🤖 Comandos de IA
+
+| Comando | O que faz |
+|---------|-----------|
+| `/ia` | 💬 Inicia um chat privado com IA |
+| `/ia-clear` | 🗑️ Limpa o histórico de conversa |
+| `/chat` | ⚡ Conversa rápida com IA |
+
+---
+
+### ⬇️ Comandos de Download
+
+| Comando | O que faz |
+|---------|-----------|
+| `/baixar` | 📥 Baixa o áudio de um vídeo |
+
+**Plataformas suportadas:** YouTube, TikTok, Instagram, Twitter/X, Facebook, Reddit, SoundCloud
+
+---
+
+## O que é o /painel?
+
+O `/painel` é o **sistema central de configurações** do bot. É onde o administrador configura tudo.
+
+> **Como usar:** Digite `/painel` e clique nos botões
+
+---
+
+### Categorias do Painel
+
+O painel tem 6 botões principais:
+
+| Botão | O que configura |
+|-------|-----------------|
+| 🛡️ **Moderação** | Filtros, warns, captcha, logs |
+| 👑 **Administração** | Cargos automáticos |
+| 📈 **Gamificação** | XP, níveis, mensagens |
+| 🎉 **Social** | Boas-vindas, eventos |
+| 🛒 **Loja** | Adicionar/editar itens |
+| 🤖 **Agente IA** | Configurar a IA |
+
+---
+
+## Configurações do Painel
+
+### 🛡️ Moderação
+
+#### 1. Log de Entrada e Saída
+| Configuração | O que é |
+|--------------|----------|
+| Canal de Logs | Canal onde as mensagens serão enviadas |
+| Mensagem de Entrada | Texto quando alguém entra |
+| Mensagem de Saída | Texto quando alguém sai |
+| Imagem de Entrada | Imagem opcional no embed |
+
+**Variáveis que você pode usar:**
 - `{member}` - Nome do membro
-- `{member.mention}` - Menção do membro
-- `{member.avatar}` - Avatar do membro
+- `{member.mention}` - Menção (@membro)
 - `{guild}` - Nome do servidor
-- `{member_count}` - Total de membros
 
 ---
 
-#### Sistema Anti-Raid
-| Configuração | Descrição |
-|--------------|-----------|
-| Ativar | Sim/Não |
-| Canal de Alerta | Canal para enviar aviso quando detectar possível raid |
-| Número de Entradas | Quantidade de entradas em pouco tempo para considerar raid |
-| Janela de Tempo | Tempo em segundos para considerar as entradas |
+#### 2. Anti-Raid (Proteção contra raid)
+| Configuração | O que é |
+|--------------|----------|
+| Ativar | Ligar ou desligar |
+| Canal de Alerta | Onde o bot avisa sobre possível raid |
+| Número de Entradas | Quantas entradas rápidas ativam o alerta |
+| Janela de Tempo | Em quantos segundos |
 
 ---
 
-#### Verificação por Captcha
-| Configuração | Descrição |
-|--------------|-----------|
-| Ativar | Sim/Não |
-| Canal de Verificação | Canal onde o membro receberá o código |
-| Cargo Não Verificado | Cargo dado temporariamente |
-| Cargo de Membro | Cargo dado após completar verificação |
+#### 3. Captcha (Verificação)
+| Configuração | O que é |
+|--------------|----------|
+| Ativar | Ligar ou desligar |
+| Canal de Verificação | Onde o membro recebe o código |
+| Cargo Não Verificado | Cargo temporário |
+| Cargo de Membro | Cargo após verificar |
 
 **Como funciona:**
-1. Membro entra no servidor
-2. Recebe o cargo "Não Verificado"
-3. Recebe DM com código de 6 caracteres
-4. Digita o código no canal de verificação
-5. Recebe o cargo de membro
+1. Pessoa entra → recebe cargo temporário
+2. Bot envia código no canal
+3. Pessoa digita o código → recebe cargo de membro
 
 ---
 
-#### Sistema de Avisos (Warns)
-| Configuração | Descrição |
-|--------------|-----------|
-| Máximo de Avisos | Quantos warns antes de punir automaticamente |
-| Ação Automática | O que fazer ao atingir o limite: Kick ou Ban |
+#### 4. Sistema de Warns (Advertências)
+| Configuração | O que é |
+|--------------|----------|
+| Máximo de Avisos | Quantos warns antes de punir |
+| Ação Automática | O que fazer: Kick ou Ban |
 
 ---
 
-#### Filtros
+#### 5. Filtros
 
-| Filtro | Configurações |
-|--------|---------------|
-| **Palavras Proibidas** | Lista de palavras separadas por vírgula |
-| **Convites** | Ativar/Desativar (bloqueia links do Discord) |
-| **Links** | Ativar/Desativar (bloqueia todos os links externos) |
-| **CAPS-Lock** | Ativar + Percentual mínimo de letras maiúsculas |
-| **Emojis** | Ativar + Quantidade máxima de emojis por mensagem |
-| **Spam** | Ativar + Número de mensagens + Intervalo em segundos |
-
----
-
-### 4.3 👑 Administração
-
-#### Auto-Role (Cargos Automáticos)
-| Configuração | Descrição |
-|--------------|-----------|
-| Ativar | Sim/Não |
-| Cargos para Conceder | Lista de cargos dados automaticamente a novos membros |
+| Filtro | O que faz |
+|--------|-----------|
+| **Palavras Proibidas** | Apaga mensagens com essas palavras |
+| **Bloquear Convites** | Não deixa postar links do Discord |
+| **Bloquear Links** | Não deixa postar nenhum link |
+| **Anti-CAPS** | Remove mensagens em MAIÚSCULAS demais |
+| **Anti-Emoji** | Remove mensagens com muitos emojis |
+| **Anti-Spam** | Remove spam de mensagens repetidas |
 
 ---
 
-### 4.4 📈 Gamificação
+### 📈 Gamificação
 
-#### Configurações de XP
-| Configuração | Descrição | Padrão |
-|--------------|-----------|--------|
-| Ativar Sistema | Sim/Não | Sim |
-| XP Mínimo por Mensagem | XP mínimo ganho por mensagem | 5 |
-| XP Máximo por Mensagem | XP máximo ganho por mensagem | 15 |
-| Cooldown | Segundos entre cada ganho de XP | 30 |
+#### 1. Sistema de XP
+| Configuração | O que é | Padrão |
+|--------------|----------|--------|
+| Ativar | Ligar o sistema | Sim |
+| XP Mínimo | XP mínimo por mensagem | 5 |
+| XP Máximo | XP máximo por mensagem | 15 |
+| Cooldown | Segundos entre ganhar XP | 30 |
 | XP por Nível | XP necessário para cada nível | 300 |
-| Nome dos Pontos | Nome customizado (ex: "moedas", "pontos", "xp") | XP |
+| Nome dos Pontos | Nome customizado (XP, moedas, etc) | XP |
 
 ---
 
-#### Mensagem de Level Up
-| Configuração | Descrição |
-|--------------|-----------|
-| Mensagem | Texto enviado quando alguém sobe de nível |
-| Canal | Canal onde a mensagem será enviada (opcional) |
+#### 2. Mensagem de Level Up
+| Configuração | O que é |
+|--------------|----------|
+| Mensagem | Texto quando alguém sobe de nível |
+| Canal | Onde enviar a mensagem |
 
-**Variáveis:**
-- `{user}` - Nome do usuário
-- `{mention}` - Menção do usuário
-- `{level}` - Novo nível
-- `{xp}` - XP total
+**Variáveis:** `{user}`, `{mention}`, `{level}`, `{xp}`
 
 ---
 
-#### Recompensa Diária (Daily)
-| Configuração | Descrição | Padrão |
-|--------------|-----------|--------|
-| XP Mínimo | Mínimo ganho no daily | 50 |
-| XP Máximo | Máximo ganho no daily | 100 |
-| Cooldown | Horas antes de usar novamente | 24 |
+#### 3. Recompensa Diária (Daily)
+| Configuração | O que é | Padrão |
+|--------------|----------|--------|
+| XP Mínimo | Mínimo que pode ganhar | 50 |
+| XP Máximo | Máximo que pode ganhar | 100 |
+| Cooldown | Horas para usar novamente | 24h |
 
 ---
 
-### 4.5 🎉 Social & Diversão
+### 🛒 Loja
 
-#### Mensagem de Boas-Vindas
-| Configuração | Descrição |
-|--------------|-----------|
-| Canal | Canal para enviar boas-vindas |
-| Mensagem | Texto de boas-vindas |
-| Imagem | URL de imagem opcional |
+#### Como adicionar itens:
+1. Clique em **"Adicionar Novo Item"**
+2. Preencha os campos:
 
----
-
-#### Eventos
-| Configuração | Descrição |
-|--------------|-----------|
-| Cargo para Criar | Cargo necessário para usar `/criar_evento` |
-
----
-
-### 4.6 🛒 Loja
-
-#### Gerenciar Itens
-| Campo | Descrição |
-|-------|-----------|
+| Campo | O que é |
+|-------|--------|
 | Nome | Nome do item |
-| Descrição | Descrição do item |
+| Descrição | O que o item faz |
 | Preço | Custo em XP |
-| Tipo | Tipo do item (ver abaixo) |
-| Dados | Dados específicos do tipo |
+| Tipo | Tipo do item |
+| Dados | Informações do item |
 
-**Tipos de Itens:**
-| Tipo | Descrição | Dados |
-|------|-----------|-------|
-| `cargo_automatico` | Cargo dado automaticamente | ID do cargo |
-| `cargo_colorido` | Cargo com cor específica | ID do cargo |
-| `fundo_perfil` | Fundo para cartão de perfil | URL da imagem |
+#### Tipos de Itens:
+
+| Tipo | O que é | Dados necessários |
+|------|---------|-------------------|
+| `cargo_automatico` | Dá cargo automaticamente | ID do cargo |
+| `cargo_colorido` | Cargo com cor | ID do cargo |
+| `fundo_perfil` | Fundo do cartão de perfil | URL da imagem |
 | `avatar_perfil` | Avatar customizado | URL da imagem |
 
 ---
 
-### 4.7 🤖 Agente IA
+### 🤖 Agente IA
 
 #### Configuração da API
-| Configuração | Descrição |
-|--------------|-----------|
-| URL da API | Endpoint da API do provedor |
-| API Key | Chave da API |
-| Modelo | Modelo de IA a usar |
-| System Prompt | Instruções de comportamento do agente |
-| Nome do Agente | Nome exibido nas conversas |
+| Configuração | O que é |
+|--------------|----------|
+| URL da API | Endereço da IA |
+| API Key | Chave de acesso |
+| Modelo | Modelo da IA (GPT-4, Claude, etc) |
+| System Prompt | Como a IA deve agir |
+| Nome do Agente | Nome que aparece no chat |
 
-**Provedores Suportados:**
+#### Provedores Suportados:
 - OpenAI (GPT-4, GPT-3.5)
 - Anthropic (Claude)
 - Google AI (Gemini)
 - Azure OpenAI
-- Ollama (local)
+- Ollama (IA local)
 - Groq
 - DeepSeek
-- E muitos outros...
+- E outros...
 
-#### Configurações Adicionais
-| Configuração | Descrição |
-|--------------|-----------|
-| Ativar/Desativar | Habilitar o agente |
-| Cargo que pode usar | Cargo necessário para usar IA |
-| Cargo que pode ver | Quem pode ver os canais de IA |
-| Categoria de Canais | Onde os canais de IA serão criados |
-
----
-
-## 5. Comandos
-
-### 5.1 Comandos Administrativos
-
-| Comando | Descrição | Uso |
-|---------|-----------|-----|
-| `/painel` | Abre o painel de controle | Administrador |
-| `/sync` | Sincroniza comandos com o Discord | Administrador |
-| `/registrar` | Registra o servidor | Administrador |
-| `/verificar` | Verifica conta por e-mail | Administrador |
-| `/mudar-senha` | Altera senha de admin | Dono do servidor |
-| `/embed` | Cria embed personalizado | Administrador |
-| `/setup-suporte` | Configura painel de suporte | Administrador |
-
-### 5.2 Moderação
-
-| Comando | Descrição | Parâmetros |
-|---------|-----------|-------------|
-| `/warn` | Aplica advertência | `membro`, `motivo` |
-| `/limpar` | Limpa mensagens | `quantidade`, `usuario` (opcional), `canal` (opcional), `periodo` (opcional) |
-| `/lock` | Bloqueia canal | `canal` (opcional), `motivo` (opcional) |
-| `/unlock` | Desbloqueia canal | `canal` (opcional) |
-
-### 5.3 Gamificação
-
-| Comando | Descrição |
-|---------|-----------|
-| `/daily` | Coleta XP diário |
-| `/perfil` | Ver perfil e nível |
-| `/rank` | Ver ranking de XP |
-| `/top_atividade` | Ver ranking de mensagens |
-| `/transferir-xp` | Transferir XP para outro membro |
-
-### 5.4 Loja
-
-| Comando | Descrição |
-|---------|-----------|
-| `/loja` | Ver itens disponíveis |
-| `/gerenciar_loja` | Gerenciar itens (Admin) |
-| `/inventario` | Ver itens comprados |
-
-### 5.5 IA
-
-| Comando | Descrição |
-|---------|-----------|
-| `/ia` | Iniciar conversa privada com IA |
-| `/ia-clear` | Limpar conversa |
-| `/chat` | Conversa rápida com IA |
-
-### 5.6 Downloads
-
-| Comando | Descrição | Parâmetros |
-|---------|-----------|-------------|
-| `/baixar` | Baixa áudio de vídeo | `url` |
-
-**Plataformas suportadas:** TikTok, Instagram, YouTube, Twitter/X, Facebook, Reddit, SoundCloud
-
-### 5.7 Social & Diversão
-
-| Comando | Descrição | Parâmetros |
-|---------|-----------|-------------|
-| `/enquete` | Cria enquete | `pergunta`, `opcao_1` a `opcao_10` |
-| `/dado` | Lança dado | `lados` (opcional, padrão: 6) |
-| `/criar_evento` | Cria evento | `titulo`, `subtitulo`, `imagem` |
-
-### 5.8 Utilidades
-
-| Comando | Descrição |
-|---------|-----------|
-| `/ping` | Ver latência do bot |
-| `/crescimento` | Ver gráfico de crescimento |
-| `/remover_fundo` | Remove fundo de imagem |
+#### Configurações de Permissão
+| Configuração | O que é |
+|--------------|----------|
+| Ativar/Desativar | Ligar ou desligar a IA |
+| Cargo que pode usar | Quem pode conversar com IA |
+| Categoria de Canais | Onde criar os canais de IA |
 
 ---
 
-## 6. Sistemas Automáticos
+## Sistemas Automáticos
 
-### 6.1 Ativos por Mensagem
+O bot faz coisas automaticamente, sem precisar de comandos:
 
-| Sistema | Descrição |
+### Ativos por Mensagem
+| Sistema | O que faz |
 |---------|-----------|
-| **Ganho de XP** | Concede XP por mensagens (configurável) |
-| **Filtro de Palavras** | Remove mensagens com palavras proibidas |
-| **Filtro de Convites** | Remove convites do Discord |
-| **Filtro de Links** | Remove links externos |
-| **Filtro de CAPS** | Remove mensagens com excesso de maiúsculas |
-| **Filtro de Emojis** | Remove mensagens com excesso de emojis |
-| **Anti-Spam** | Remove spam de mensagens repetidas |
-| **Auto-Download** | Detecta e baixa URLs automaticamente |
+| **XP por mensagem** | Ganha XP ao conversar |
+| **Filtro de palavras** | Apaga palavras proibidas |
+| **Filtro de convites** | Bloqueia convites do Discord |
+| **Filtro de links** | Bloqueia todos os links |
+| **Anti-CAPS** | Remove mensagens em MAIÚSCULAS |
+| **Anti-Emoji** | Remove muitos emojis |
+| **Anti-Spam** | Remove spam |
 
-### 6.2 Ativos por Evento
-
-| Sistema | Descrição |
+### Ativos por Evento
+| Sistema | O que faz |
 |---------|-----------|
-| **Boas-Vindas** | Envia mensagem quando membro entra |
-| **Logs de Entrada/Saída** | Registra entradas e saídas |
-| **Auto-Role** | Concede cargos automaticamente |
-| **Captcha** | Verificação ao entrar |
-| **Anti-Raid** | Detecta possível raid |
+| **Boas-vindas** | Envia mensagem quando alguém entra |
+| **Logs** | Registra entradas e saídas |
+| **Auto-role** | Dá cargos automaticamente |
+| **Captcha** | Verifica novos membros |
+| **Anti-Raid** | Detecta raids |
 | **Account Age** | Expulsa contas muito recentes |
 
 ---
 
-## 7. Loja e Gamificação
+## Como usar os principais sistemas
 
-### 7.1 Sistema de Níveis
+### Como funciona o XP?
 
-```
-XP necessário por nível = nível × XP_base
-```
-
-Exemplo (XP_base = 300):
-- Nível 0 → 0 XP
-- Nível 1 → 300 XP
-- Nível 2 → 600 XP
-- Nível 10 → 3000 XP
-
-### 7.2 Transferência de XP
+1. Você ganha XP ao enviar mensagens
+2. O XP é aleatório (entre mínimo e máximo configurado)
+3. Quando atinge 300 XP (padrão), sobe de nível
+4. O XP necessário aumenta a cada nível
 
 ```
-/transferir-xp <membro> <quantidade>
+Nível 1 = 300 XP
+Nível 2 = 600 XP
+Nível 10 = 3000 XP
 ```
-
-- Taxa: 5% do valor transferido
-- Exemplo: Transferir 100 XP → Custo real: 105 XP
-
-### 7.3 Daily (Recompensa Diária)
-
-- Ganha XP aleatório entre mínimo e máximo configurados
-- Cooldown: 24 horas (configurável)
-- Contribui para o nível
 
 ---
 
-## 8. IA e Downloads
+### Como usar a Loja?
 
-### 8.1 Agente IA
+1. Ganhe XP conversando ou com `/daily`
+2. Use `/loja` para ver os itens
+3. Clique no que quer comprar
+4. Use `/inventario` para equipar
 
-**Como usar:**
+---
+
+### Como funciona o Daily?
+
+1. Use `/daily` uma vez por dia
+2. Ganha XP aleatório (entre mínimo e máximo)
+3. Aguarde o cooldown (24h) para usar novamente
+
+---
+
+### Como usar a IA?
+
 1. Use `/ia` para criar um canal privado
 2. Converse no canal criado
-3. Use `/ia-clear` para limpar o histórico
+3. A IA lembra tudo que você conversou
+4. Use `/ia-clear` para apagar a conversa
 
-**Configurações do painel:**
-- Provedor de API
-- Modelo
-- System prompt customizável
-- Permissões por cargo
+---
 
-### 8.2 Downloads
+### Como baixar áudio?
 
-**Como usar:**
+1. Use `/baixar` + URL do vídeo
+2. O bot baixa e converte para MP3
+3. Envia o arquivo no seu DM
+
+**Exemplo:**
 ```
-/baixar <URL>
+/baixar https://www.youtube.com/watch?v=...
 ```
 
-- O áudio é enviado via DM
-- Formato: MP3
-- Se > 25MB, compactado em ZIP
-- Cooldown: 30 segundos
+---
+
+## Perguntas Frequentes
+
+**O bot não responde?**
+→ Use `/sync` para sincronizar os comandos
+
+**Não consigo configurar?**
+→ Você precisa ser administrador e ter registrado com `/registrar`
+
+**O que é o /painel?**
+→ É onde o administrador configura tudo. Só admins podem usar.
+
+**Como ganho XP?**
+→ Conversando no chat (tem um cooldown) ou usando `/daily`
 
 ---
 
-## 📊 Tabela Resumo de Configurações
+## Resumo Rápido
 
-| Sistema | Local de Configuração | Necessita Painel? |
-|---------|----------------------|-------------------|
-| XP por mensagem | Painel → Gamificação | ✅ |
-| Level up | Painel → Gamificação | ✅ |
-| Daily | Painel → Gamificação | ✅ |
-| Auto-role | Painel → Administração | ✅ |
-| Captcha | Painel → Moderação | ✅ |
-| Anti-Raid | Painel → Moderação | ✅ |
-| Warns | Painel → Moderação | ✅ |
-| Filtros | Painel → Moderação | ✅ |
-| Logs | Painel → Moderação | ✅ |
-| Boas-vindas | Painel → Social | ✅ |
-| Loja | Painel → Loja | ✅ |
-| IA | Painel → Agente IA | ✅ |
+```
+Primeiro uso:
+1. /registrar
+2. /verificar (código do e-mail)
+3. /painel (configurar tudo)
+
+Uso diário:
+/perfil  - ver nível e XP
+/daily   - ganhar XP grátis
+/loja    - comprar itens
+/rank    - ver ranking
+```
 
 ---
 
-## 🔧 Solução de Problemas
+## Problemas e Soluções
 
-### Bot não responde
-1. Verifique se o bot está online
-2. Use `/ping` para verificar latência
-3. Verifique se os comandos estão sincronizados: `/sync`
-
-### XP não está sendo dado
-1. Verifique se o sistema está ativado no painel
-2. Verifique as configurações de XP
-
-### Filtros não funcionam
-1. Ative os filtros no painel
-2. Configure as palavras/limites desejados
-
-### IA não responde
-1. Verifique a API key no painel
-2. Verifique se o agente está ativado
-3. Teste a conexão com a API
-
----
-
-## 📝 Notas
-
-- O prefixo do bot é `!` mas todos os comandos são slash commands (`/`)
-- O bot requer permissões de administrador para funcionar completamente
-- Todas as configurações são salvas no Supabase
-- O painel de controle é a forma recomendada de configurar o bot
+| Problema | Solução |
+|----------|---------|
+| Bot offline | Verifique se está rodando |
+| Comandos não aparecem | Use `/sync` |
+| XP não aumenta | Verifique configurações no `/painel` |
+| Filtros não funcionam | Ative no `/painel` → Moderação |
+| IA não responde | Configure a API no `/painel` → IA |

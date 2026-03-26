@@ -21,8 +21,11 @@ class XpSystem(commands.Cog):
 
             if response.data:
                 server_settings = response.data[0].get('settings', {})
-                return server_settings.get('gamification_xp', {})
-
+                gamification = server_settings.get('gamification_xp', {})
+                logging.info(f"[XP] Config carregada para guild {guild_id}: {gamification}")
+                return gamification
+            else:
+                logging.warning(f"[XP] Nenhuma configuração encontrada para guild {guild_id}")
         except Exception as e:
             logging.error(f"[XP] Erro ao buscar configurações para o servidor {guild_id}: {e}")
         return {}
@@ -68,12 +71,12 @@ class XpSystem(commands.Cog):
 
             if new_level is not None:
                 try:
-                    level_up_message = settings.get("level_up_message", "🎉 Parabéns {mention}, você alcançou o **Nível {level}**! 🎉")
-                    formatted_message = level_up_message.format(mention=message.author.mention, level=new_level, user=message.author.display_name)
-                    # A CULPA É MINHA, AGORA ENVIA NA DM
+                    level_up_message = settings.get("level_up_message", "🎉 Parabéns {mention}, você alcançou o **Nível {level}** no servidor {guild}! 🎉")
+                    logging.info(f"[XP] Mensagem de level up carregada: {level_up_message}")
+                    formatted_message = level_up_message.format(mention=message.author.mention, level=new_level, user=message.author.display_name, guild=message.guild.name)
                     await message.author.send(formatted_message)
                 except discord.Forbidden:
-                    logging.warning(f"Não foi possível enviar a DM de level up para {message.author.name}. A culpa é minha.")
+                    logging.warning(f"Não foi possível enviar a DM de level up para {message.author.name}.")
 
         except Exception as e:
             logging.error(f"[XP] Erro Crítico ao chamar update_xp para {message.author.name}: {e}")

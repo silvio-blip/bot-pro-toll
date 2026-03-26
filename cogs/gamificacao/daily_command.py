@@ -33,7 +33,8 @@ class DailyCommand(commands.Cog):
             daily_min = int(gamification_settings.get('daily_xp_min', 50))
             daily_max = int(gamification_settings.get('daily_xp_max', 200))
             cooldown_hours = int(gamification_settings.get('daily_cooldown_hours', 23))
-            level_up_message = gamification_settings.get("level_up_message", "🎉 Parabéns {mention}, você alcançou o **Nível {level}**! 🎉")
+            level_up_message = gamification_settings.get("level_up_message", "🎉 Parabéns {mention}, você alcançou o **Nível {level}** no servidor {guild}! 🎉")
+            logging.info(f"[DAILY] Config carregada - level_up_message: {level_up_message}")
 
             # 2. Obter perfil de gamificação do usuário
             profile_response = self.bot.supabase_client.table("gamification_profiles").select("xp", "last_daily_claim").eq("user_id", user.id).eq("guild_id", guild.id).execute()
@@ -74,10 +75,10 @@ class DailyCommand(commands.Cog):
             # Envia mensagem de level up na DM se aplicável
             if new_level is not None:
                 try:
-                    formatted_message = level_up_message.format(mention=user.mention, level=new_level, user=user.display_name)
+                    formatted_message = level_up_message.format(mention=user.mention, level=new_level, user=user.display_name, guild=interaction.guild.name)
                     await user.send(formatted_message)
                 except discord.Forbidden:
-                    logging.warning(f"Não foi possível enviar a DM de level up para {user.name} após o /daily. A culpa é minha.")
+                    logging.warning(f"Não foi possível enviar a DM de level up para {user.name}.")
 
         except Exception as e:
             logging.error(f"Erro no comando /daily: {e}")

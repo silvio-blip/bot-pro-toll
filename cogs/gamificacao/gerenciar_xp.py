@@ -34,13 +34,12 @@ class GerenciarXp(commands.Cog):
             # Mensagem de confirmação
             await interaction.followup.send(f"✅ {quantidade} pontos de XP foram {action_text} com sucesso para {usuario.mention}.", ephemeral=True)
 
-            # Se o usuário subiu de nível, envia uma mensagem pública
+            # Se o usuário subiu de nível, envia mensagem por DM
             if new_level is not None:
                 try:
-                    # Tenta enviar no canal da interação, se falhar, não faz nada
-                    await interaction.channel.send(f"🎉 Parabéns {usuario.mention}, você foi promovido para o **Nível {new_level}**! 🎉")
+                    await usuario.send(f"🎉 Parabéns {usuario.mention}, você alcançou o **Nível {new_level}** no servidor {interaction.guild.name}! 🎉")
                 except discord.Forbidden:
-                    logging.warning(f"Não foi possível anunciar o level up de {usuario.name} no canal {interaction.channel.name}.")
+                    pass
 
         except Exception as e:
             logging.error(f"Erro ao executar o comando /gerenciar_xp: {e}")

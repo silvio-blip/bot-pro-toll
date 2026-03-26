@@ -8,7 +8,7 @@ import requests
 from io import BytesIO
 
 # --- Função para Gerar o Cartão de Perfil ---
-async def create_rank_card(user_avatar_url: str, user_name: str, current_level: int, current_xp_in_level: int, xp_for_level_up: int, points_name: str, background_url: str = None, custom_avatar_url: str = None) -> BytesIO:
+async def create_rank_card(user_avatar_url: str, user_name: str, current_level: int, current_xp_in_level: int, xp_for_level_up: int, points_name: str, total_xp: int = 0, background_url: str = None, custom_avatar_url: str = None) -> BytesIO:
     """Gera uma imagem de cartão de perfil para o usuário, com fundo e avatar personalizáveis."""
     try:
         title_font = ImageFont.truetype("assets/fonts/Poppins-Bold.ttf", 40)
@@ -58,6 +58,7 @@ async def create_rank_card(user_avatar_url: str, user_name: str, current_level: 
     draw = ImageDraw.Draw(card)
     draw.text((200, 30), user_name, font=title_font, fill=(255, 255, 255))
     draw.text((200, 90), f"Nível {current_level}", font=regular_font, fill=(200, 200, 200))
+    draw.text((200, 115), f"Total: {total_xp} {points_name}", font=small_font, fill=(150, 150, 150))
     xp_progress = min(current_xp_in_level / xp_for_level_up, 1.0) if xp_for_level_up > 0 else 1.0
     draw.rounded_rectangle((200, 140, 750, 165), radius=10, fill=(70, 70, 70))
     if xp_progress > 0: draw.rounded_rectangle((200, 140, 200 + (550 * xp_progress), 165), radius=10, fill=(0, 255, 127))
@@ -111,6 +112,7 @@ class PerfilCommand(commands.Cog):
                 current_xp_in_level=xp_in_this_level,
                 xp_for_level_up=total_xp_for_this_level_up,
                 points_name=points_name,
+                total_xp=total_xp,
                 background_url=background_url
             )
             
