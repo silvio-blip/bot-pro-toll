@@ -1,4 +1,4 @@
-# 📚 Documentação do Bot Discord
+# Documentação do Bot Discord
 
 ---
 
@@ -8,15 +8,15 @@ Este é um bot completo para Discord com várias funcionalidades:
 
 | Sistema | O que faz |
 |---------|-----------|
-| 🛡️ **Moderação** | Protege o servidor com filtros, warns e muito mais |
-| ⭐ **Gamificação** | Sistema de XP e níveis para engajar membros |
-| 🛒 **Loja** | Loja virtual onde membros compram itens com XP |
-| 🤖 **IA** | Chat com Inteligência Artificial |
-| ⬇️ **Downloads** | Baixa áudio de vídeos (YouTube, TikTok, etc) |
-| 🎉 **Diversão** | Enquetes, dados, eventos |
-| 📊 **Utilidades** | Remover fundo de imagens, ping, gráficos |
-| 🎫 **Suporte** | Sistema de tickets e hub de suporte |
-| 📢 **Denúncias** | Sistema de denúncias de usuários |
+| **Moderação** | Protege o servidor com filtros, warns e muito mais |
+| **Gamificação** | Sistema de XP e níveis para engajar membros |
+| **Loja** | Loja virtual onde membros compram itens com XP |
+| **IA** | Chat com Inteligência Artificial |
+| **Downloads** | Baixa áudio de vídeos (YouTube, TikTok, etc) |
+| **Diversão** | Enquetes, dados, eventos |
+| **Utilidades** | Remover fundo de imagens, ping, gráficos |
+| **Suporte** | Sistema de tickets e hub de suporte |
+| **Denúncias** | Sistema de denúncias de usuários |
 
 ---
 
@@ -41,39 +41,39 @@ Antes de tudo, o administrador precisa registrar o servidor:
 
 ## Todos os Comandos
 
-### 🔧 Comandos Administrativos
+### Comandos Administrativos
 
 | Comando | Descrição |
 |---------|-----------|
-| `/painel` | 🟢 **O mais importante!** Abre o painel de configurações |
-| `/registrar` | 📝 Registra o servidor no bot |
-| `/verificar` | ✅ Confirma sua conta com código do e-mail |
-| `/mudar-senha` | 🔐 Altera sua senha de administrador |
-| `/desregistrar-servidor` | ❌ Remove todos os dados do servidor |
-| `/sync` | 🔄 Sincroniza os comandos com o Discord |
-| `/embed` | 💬 Cria mensagens bonitas formatadas |
-| `/setup-suporte` | 🎧 Configura o sistema de suporte |
-| `/setup-tickets` | 🎫 Cria o painel de tickets |
+| `/painel` | O mais importante! Abre o painel de configurações |
+| `/registrar` | Registra o servidor no bot |
+| `/verificar` | Confirma sua conta com código do e-mail |
+| `/mudar-senha` | Altera sua senha de administrador |
+| `/desregistrar-servidor` | Remove todos os dados do servidor |
+| `/sync` | Sincroniza os comandos com o Discord |
+| `/embed` | Cria mensagens bonitas formatadas |
+| `/setup-suporte` | Configura o sistema de suporte |
+| `/setup-tickets` | Cria o painel de tickets |
 
 ---
 
-### 🎮 Comandos de Gamificação
+### Comandos de Gamificação
 
 | Comando | Descrição |
 |---------|-----------|
-| `/perfil` | 👤 Mostra seu nível, XP e cartão personalizado |
-| `/rank` | 🏆 Mostra o ranking dos membros com mais XP |
-| `/rank_geral` | 🌟 Ranking geral de XP do servidor |
-| `/top_atividade` | 📊 Mostra quem mais conversa |
-| `/daily` | 🎁 Ganha XP diário-grátis |
-| `/transferir` | 💸 Envia XP para outro membro |
-| `/gerenciar_xp` | 💎 Adiciona ou remove XP de um usuário (admin) |
-| `/adicionar_moedas` | ➕ Adiciona XP a um usuário (admin) |
-| `/remover_moedas` | ➖ Remove XP de um usuário (admin) |
+| `/perfil` | Mostra seu nível, XP e cartão personalizado |
+| `/rank` | Mostra o ranking dos membros com mais XP |
+| `/rank_geral` | Ranking geral de XP do servidor |
+| `/top_atividade` | Mostra quem mais conversa |
+| `/daily` | Ganha XP diario-gratis |
+| `/transferir` | Envia XP para outro membro |
+| `/gerenciar_xp` | Adiciona ou remove XP de um usuário (admin) |
+| `/adicionar_moedas` | Adiciona XP a um usuário (admin) |
+| `/remover_moedas` | Remove XP de um usuário (admin) |
 
 ---
 
-### 🛒 Comandos da Loja
+### Comandos da Loja
 
 | Comando | Descrição |
 |---------|-----------|
@@ -83,38 +83,38 @@ Antes de tudo, o administrador precisa registrar o servidor:
 
 ---
 
-### 🎲 Comandos de Diversão
+### Comandos de Diversão
 
 | Comando | Descrição |
 |---------|-----------|
-| `/dado` | 🎲 Lança um dado (pode escolher quantos lados) |
-| `/enquete` | 📋 Cria uma votação com botões |
-| `/criar_evento` | 🎪 Cria um evento customizado |
+| `/dado` | Lança um dado (pode escolher quantos lados) |
+| `/enquete` | Cria uma votação com botões |
+| `/criar_evento` | Cria um evento customizado |
 
 ---
 
-### 🛡️ Comandos de Moderação
+### Comandos de Moderação
 
 | Comando | Descrição |
 |---------|-----------|
-| `/warn` | ⚠️ Advertir um membro |
-| `/limpar` | 🧹 Apagar mensagens (com opções de quantidade e usuário) |
-| `/lock` | 🔒 Bloquear um canal |
-| `/unlock` | 🔓 Desbloquear um canal |
-| `/denunciar` | 🚨 Denunciar um usuário |
+| `/warn` | Advertir um membro |
+| `/limpar` | Apagar mensagens (com opções de quantidade e usuário) |
+| `/lock` | Bloquear um canal |
+| `/unlock` | Desbloquear um canal |
+| `/denunciar` | Denunciar um usuário |
 
 ---
 
-### 🤖 Comandos de IA
+### Comandos de IA
 
 | Comando | Descrição |
 |---------|-----------|
-| `/ia` | 💬 Inicia um chat privado com IA |
-| `/ia-clear` | 🗑️ Limpa o histórico de conversa |
+| `/ia` | Inicia um chat privado com IA |
+| `/ia-clear` | Limpa o histórico de conversa |
 
 ---
 
-### ⬇️ Comandos de Download
+### Comandos de Download
 
 | Comando | Descrição |
 |---------|-----------|
@@ -124,28 +124,57 @@ Antes de tudo, o administrador precisa registrar o servidor:
 
 ---
 
-### 📊 Comandos de Utilidades
+### Comandos de Utilidades
 
 | Comando | Descrição |
 |---------|-----------|
-| `/ping` | 📡 Ver se o bot está online e a latência |
-| `/crescimento` | 📈 Ver gráfico de crescimento do servidor |
+| `/ping` | Ver se o bot está online e a latência |
+| `/crescimento` | Ver gráfico de crescimento do servidor |
 
 ---
 
-### 🎫 Comandos de Suporte
+### Comandos de Suporte
 
 | Comando | Descrição |
 |---------|-----------|
-| `/fechar-ticket` | 🔒 Fecha o ticket atual |
+| `/fechar-ticket` | Fecha o ticket atual |
 
 ---
 
-### ❓ Comandos de Ajuda
+### Comandos de Ajuda
 
 | Comando | Descrição |
 |---------|-----------|
-| `/ajuda` | ℹ️ Mostra um painel de ajuda interativo |
+| `/ajuda` | Mostra um painel de ajuda interativo |
+
+---
+
+## Sistema de Perfil
+
+O comando `/perfil` mostra o cartão personalizado do usuário com:
+- Nivel e XP
+- Badge do servidor
+- Fundo customizavel
+- Avatar customizavel
+- Bio (Sobre mim)
+- Privacidade (perfil público ou privado)
+
+### Botões do Perfil
+| Botão | O que faz |
+|-------|-----------|
+| **Fundo** | Seleciona um fundo do seu inventario |
+| **Avatar** | Seleciona um avatar do seu inventario |
+| **Bio** | Edita sua biografia (ate 60 caracteres) |
+| **Privado** | Alterna entre perfil público e privado |
+
+### Como usar a Bio
+1. Clique no botão **Bio** no seu perfil
+2. Escreva algo sobre você
+3. Salve e pronto!
+
+### Perfil Privado
+- Quando ativo, apenas admins podem ver os detalhes do perfil
+- Otros usuários veem apenas o nome e avatar
 
 ---
 
@@ -163,18 +192,18 @@ O painel tem 6 botões principais:
 
 | Botão | O que configura |
 |-------|-----------------|
-| 🛡️ **Moderação** | Filtros, warns, captcha, logs |
-| 👑 **Administração** | Cargos automáticos |
-| 📈 **Gamificação** | XP, níveis, mensagens |
-| 🎉 **Social** | Boas-vindas, eventos |
-| 🛒 **Loja** | Adicionar/editar itens |
-| 🤖 **Agente IA** | Configurar a IA |
+| **Moderação** | Filtros, warns, captcha, logs |
+| **Administração** | Cargos automáticos |
+| **Gamificação** | XP, níveis, mensagens |
+| **Social** | Boas-vindas, eventos |
+| **Loja** | Adicionar/editar itens |
+| **Agente IA** | Configurar a IA |
 
 ---
 
 ## Configurações do Painel
 
-### 🛡️ Moderação
+### Moderação
 
 #### 1. Log de Entrada e Saída
 | Configuração | O que é |
@@ -237,7 +266,7 @@ O painel tem 6 botões principais:
 
 ---
 
-### 📈 Gamificação
+### Gamificação
 
 #### 1. Sistema de XP
 | Configuração | O que é | Padrão |
@@ -272,6 +301,11 @@ O painel tem 6 botões principais:
 
 ### 🛒 Loja
 
+A loja tem navegação por botões:
+- **◀ / ▶** - Navegar entre itens
+- **Nome do item** - Ver detalhes
+- **Categorias** - Filtrar por tipo
+
 #### Como adicionar itens:
 1. Clique em **"Adicionar Novo Item"**
 2. Preencha os campos:
@@ -295,7 +329,7 @@ O painel tem 6 botões principais:
 
 ---
 
-### 🤖 Agente IA
+### Agente IA
 
 #### Configuração da API
 | Configuração | O que é |
@@ -448,12 +482,12 @@ Nível 10 = 3000 XP
 ```
 Primeiro uso:
 1. /registrar
-2. /verificar (código do e-mail)
+2. /verificar (codigo do e-mail)
 3. /painel (configurar tudo)
 
-Uso diário:
-/perfil  - ver nível e XP
-/daily   - ganhar XP grátis
+Uso diario:
+/perfil  - ver nivel e XP
+/daily   - ganhar XP gratis
 /loja    - comprar itens
 /rank    - ver ranking
 ```
