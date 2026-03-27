@@ -205,7 +205,6 @@ class MyBot(commands.Bot):
             'cogs.moderacao.report_system',
             'cogs.loja.shop_manager',
             'cogs.loja.shop_user',
-            'cogs.loja.inventario_command',
             'cogs.utilidades',  # Temporariamente desativado - requer libstdc++6
             'cogs.embed_command',
             'cogs.ia.agent_ia',
@@ -314,7 +313,6 @@ class MyBot(commands.Bot):
             'cogs.moderacao.account_age': '📅',
             'cogs.loja.shop_manager': '🛒',
             'cogs.loja.shop_user': '🛍️',
-            'cogs.loja.inventario_command': '🎒',
             'cogs.utilidades': '🛠️',
             'cogs.embed_command': '📨',
             'cogs.ia.agent_ia': '🧠',
