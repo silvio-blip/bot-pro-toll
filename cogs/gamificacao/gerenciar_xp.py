@@ -44,6 +44,14 @@ class GerenciarXp(commands.Cog):
         except Exception as e:
             logging.error(f"Erro ao executar o comando /gerenciar_xp: {e}")
             await interaction.followup.send("Ocorreu um erro ao tentar modificar o XP do usuário.", ephemeral=True)
+    
+    @gerenciar_xp.error
+    async def gerenciar_xp_error(self, interaction: Interaction, error: app_commands.AppCommandError):
+        if isinstance(error, app_commands.MissingPermissions):
+            await interaction.response.send_message("❌ Você não tem permissão para usar este comando. Apenas administradores podem usar.", ephemeral=True)
+        else:
+            logging.error(f"Erro no comando gerenciar_xp: {error}")
+            await interaction.response.send_message("❌ Ocorreu um erro ao executar este comando.", ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(GerenciarXp(bot))

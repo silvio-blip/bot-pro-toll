@@ -634,6 +634,14 @@ class PainelControle(commands.Cog):
         logger.info(f"Comando /painel usado por {interaction.user.name}.")
         embed = create_main_panel_embed()
         await interaction.response.send_message(embed=embed, view=PainelView(self.bot), ephemeral=True)
+    
+    @painel.error
+    async def painel_error(self, interaction: Interaction, error: app_commands.AppCommandError):
+        if isinstance(error, app_commands.MissingPermissions):
+            await interaction.response.send_message("❌ Você não tem permissão para usar este comando. Apenas administradores podem usar.", ephemeral=True)
+        else:
+            logger.error(f"Erro no comando painel: {error}")
+            await interaction.response.send_message("❌ Ocorreu um erro ao executar este comando.", ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(PainelControle(bot))

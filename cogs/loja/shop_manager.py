@@ -150,14 +150,14 @@ class ItemActionView(ui.View):
 # View para ser importada pelo painel de controle
 class ShopManagerPanelView(ui.View):
     def __init__(self, bot_instance):
-        super().__init__(timeout=None) # Removido timeout para persistência no painel
+        super().__init__(timeout=None)
         self.bot = bot_instance
     
-    @ui.button(label="Adicionar Novo Item", style=ButtonStyle.success, emoji="➕")
+    @ui.button(label="Adicionar Novo Item", style=ButtonStyle.success, emoji="➕", row=0)
     async def add_item_button(self, interaction: Interaction, button: ui.Button):
         await interaction.response.send_modal(ItemModal(self.bot))
 
-    @ui.button(label="Editar ou Apagar Item", style=ButtonStyle.secondary, emoji="📝")
+    @ui.button(label="Editar ou Apagar Item", style=ButtonStyle.secondary, emoji="📝", row=1)
     async def list_items_button(self, interaction: Interaction, button: ui.Button):
         await interaction.response.defer(ephemeral=True, thinking=True)
         try:
@@ -171,15 +171,16 @@ class ShopManagerPanelView(ui.View):
         except Exception as e:
             logging.error(f"Erro ao listar itens da loja: {e}")
             await interaction.followup.send("Ocorreu um erro ao buscar os itens.", ephemeral=True)
+    
+    @ui.button(label="◀️ Voltar", style=ButtonStyle.secondary, row=2)
+    async def back_button(self, interaction: Interaction, button: ui.Button):
+        from cogs.painel_controle import PainelView, create_main_panel_embed
+        embed = create_main_panel_embed()
+        await interaction.response.edit_message(embed=embed, view=PainelView(self.bot))
 
 class ShopManagerCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-
-    @app_commands.command(name="gerenciar_loja", description="Adicionar, editar ou remover itens da loja do servidor.")
-    @app_commands.checks.has_permissions(administrator=True)
-    async def gerenciar_loja(self, interaction: Interaction):
-        await interaction.response.send_message("O que você gostaria de fazer?", view=ShopManagerPanelView(self.bot), ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(ShopManagerCog(bot))
