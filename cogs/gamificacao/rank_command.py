@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord import app_commands, Interaction, File, ui, Embed
+from discord import app_commands, Interaction, File, ui, Embed, ButtonStyle, TextStyle
 import logging
 from PIL import Image, ImageDraw, ImageFont
 import requests
@@ -120,7 +120,8 @@ async def create_rank_card(
     total_members: int = 0,
     inventory_items: list = None,
     equipped_background: str = None,
-    equipped_avatar: str = None
+    equipped_avatar: str = None,
+    profile_bio: str = ""
 ) -> BytesIO:
     """Gera uma imagem de cartão de perfil moderno e bonito"""
     
@@ -257,6 +258,22 @@ async def create_rank_card(
     
     draw.text((210 * scale_factor, 145 * scale_factor), level_badge, font=stat_value_font, fill=level_color)
     
+    # ========== CAMPO BIO (canto superior direito) ==========
+    if profile_bio:
+        bio_box_x = 580 * scale_factor
+        bio_box_y = 55 * scale_factor
+        
+        draw.text((bio_box_x, bio_box_y), "Sobre mim...", font=stat_label_font, fill=(139, 92, 246))
+        
+        bio_text_y = bio_box_y + 25 * scale_factor
+        max_chars = 40
+        bio_lines = []
+        for i in range(0, len(profile_bio), max_chars):
+            bio_lines.append(profile_bio[i:i + max_chars])
+        
+        for i, line in enumerate(bio_lines[:3]):
+            draw.text((bio_box_x, bio_text_y + i * 22 * scale_factor), line, font=tiny_font, fill=(255, 255, 255))
+    
     # ========== CARDS DE ESTATÍSTICAS (abaixo da barra de XP) ==========
     card_spacing = 12 * scale_factor
     stat_card_width = 140 * scale_factor
@@ -266,14 +283,14 @@ async def create_rank_card(
     stats_y = 280 * scale_factor
     stats_container = create_stats_card(stat_card_width, 100 * scale_factor, 10 * scale_factor)
     card.paste(stats_container, (stats_x, stats_y), stats_container)
-    draw.text((stats_x + 12 * scale_factor, stats_y + 10 * scale_factor), "🏆 RANK", font=stat_label_font, fill=(139, 92, 246))
+    draw.text((stats_x + 12 * scale_factor, stats_y + 10 * scale_factor), "RANK", font=stat_label_font, fill=(139, 92, 246))
     draw.text((stats_x + 12 * scale_factor, stats_y + 45 * scale_factor), f"#{rank_position}/{total_members}", font=stat_value_font, fill=(255, 255, 255))
     
     # Card 2 - Mensagens (meio)
     stats_x2 = stats_x + stat_card_width + card_spacing
     stats_container2 = create_stats_card(stat_card_width, 100 * scale_factor, 10 * scale_factor)
     card.paste(stats_container2, (stats_x2, stats_y), stats_container2)
-    draw.text((stats_x2 + 12 * scale_factor, stats_y + 10 * scale_factor), "💬 MSG", font=stat_label_font, fill=(59, 130, 246))
+    draw.text((stats_x2 + 12 * scale_factor, stats_y + 10 * scale_factor), "MENSAGENS", font=stat_label_font, fill=(59, 130, 246))
     draw.text((stats_x2 + 12 * scale_factor, stats_y + 45 * scale_factor), f"{message_count:,}", font=stat_value_font, fill=(255, 255, 255))
     
     # Card 3 - XP Total (direita - mais larga)
@@ -281,7 +298,7 @@ async def create_rank_card(
     stat_card_width_large = 280 * scale_factor
     stats_container3 = create_stats_card(stat_card_width_large, 100 * scale_factor, 10 * scale_factor)
     card.paste(stats_container3, (stats_x3, stats_y), stats_container3)
-    draw.text((stats_x3 + 12 * scale_factor, stats_y + 10 * scale_factor), f"💎 {points_name.upper()}", font=stat_label_font, fill=(99, 102, 241))
+    draw.text((stats_x3 + 12 * scale_factor, stats_y + 10 * scale_factor), f"{points_name.upper()}", font=stat_label_font, fill=(99, 102, 241))
     draw.text((stats_x3 + 12 * scale_factor, stats_y + 45 * scale_factor), f"{total_xp:,}", font=stat_value_font, fill=(255, 215, 0))
     
     # ========== BARRA DE XP ==========
@@ -327,29 +344,28 @@ async def create_rank_card(
     # ========== ESTATÍSTICAS DETALHADAS ==========
     detail_y = 450 * scale_factor
     
-    draw.text((40 * scale_factor, detail_y), "📊 ESTATÍSTICAS", font=stat_label_font, fill=(255, 255, 255))
+    draw.text((40 * scale_factor, detail_y), "ESTATISTICAS", font=stat_label_font, fill=(255, 255, 255))
     draw.line((40 * scale_factor, detail_y + 35 * scale_factor, 960 * scale_factor, detail_y + 35 * scale_factor), fill=(139, 92, 246, 80), width=2 * scale_factor)
     
     detail_y += 55 * scale_factor
     
     stats_detail = [
-        ("⏰", "Tempo no servidor", f"{days_in_server} dias"),
+        ("TEMPO NO SERVIDOR", f"{days_in_server} dias"),
     ]
     
-    for i, (emoji, label, value) in enumerate(stats_detail):
+    for i, (label, value) in enumerate(stats_detail):
         x_pos = 290 * scale_factor
         
         mini_card = create_stats_card(280 * scale_factor, 85 * scale_factor, 10 * scale_factor)
         card.paste(mini_card, (x_pos, detail_y), mini_card)
         
-        draw.text((x_pos + 15 * scale_factor, detail_y + 12 * scale_factor), emoji, font=stat_value_font, fill=(255, 255, 255))
-        draw.text((x_pos + 60 * scale_factor, detail_y + 12 * scale_factor), label, font=stat_label_font, fill=(150, 150, 150))
-        draw.text((x_pos + 60 * scale_factor, detail_y + 45 * scale_factor), value, font=stat_value_font, fill=(255, 255, 255))
+        draw.text((x_pos + 15 * scale_factor, detail_y + 12 * scale_factor), label, font=stat_label_font, fill=(150, 150, 150))
+        draw.text((x_pos + 15 * scale_factor, detail_y + 45 * scale_factor), value, font=stat_value_font, fill=(255, 255, 255))
     
-    # ========== INVENTÁRIO ==========
+    # ========== INVENTARIO ==========
     inv_y = 560 * scale_factor
     
-    draw.text((40 * scale_factor, inv_y), "🎒 INVENTÁRIO", font=stat_label_font, fill=(255, 255, 255))
+    draw.text((40 * scale_factor, inv_y), "INVENTARIO", font=stat_label_font, fill=(255, 255, 255))
     draw.line((40 * scale_factor, inv_y + 35 * scale_factor, 960 * scale_factor, inv_y + 35 * scale_factor), fill=(139, 92, 246, 80), width=2 * scale_factor)
     
     inv_y += 55 * scale_factor
@@ -361,20 +377,20 @@ async def create_rank_card(
     
     categories = []
     if fundos:
-        categories.append(("🖼️ Fundos", [item['item_name'] for item in fundos]))
+        categories.append(("Fundos", [item['item_name'] for item in fundos]))
     if avatares:
-        categories.append(("👤 Avatares", [item['item_name'] for item in avatares]))
+        categories.append(("Avatares", [item['item_name'] for item in avatares]))
     if cargos:
-        categories.append(("🔑 Cargos", [item['item_name'] for item in cargos]))
+        categories.append(("Cargos", [item['item_name'] for item in cargos]))
     if licencas:
-        categories.append(("📋 Licenças", [item['item_name'] for item in licencas]))
+        categories.append(("Licencas", [item['item_name'] for item in licencas]))
     
     if categories:
         item_spacing = 240 * scale_factor
-        for i, (emoji, items) in enumerate(categories):
+        for i, (cat_name, items) in enumerate(categories):
             x_pos = 40 * scale_factor + (i * item_spacing)
             
-            draw.text((x_pos, inv_y), emoji, font=small_font, fill=(255, 255, 255))
+            draw.text((x_pos, inv_y), cat_name, font=small_font, fill=(255, 255, 255))
             
             item_text = ", ".join(items[:2])
             if len(items) > 2:
@@ -467,6 +483,13 @@ class ProfileView(ui.View):
             
             profile_data = profile_response.data[0]
             
+            # Buscar bio e privacidade separadamente
+            extra_response = self.bot.supabase_client.table("gamification_profiles").select(
+                "profile_bio, is_private"
+            ).eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
+            profile_bio = extra_response.data[0].get('profile_bio', '') if extra_response.data else ''
+            is_private = extra_response.data[0].get('is_private', False) if extra_response.data else False
+            
             settings_response = self.bot.supabase_client.table("server_configurations").select("settings").eq("server_guild_id", self.guild_id).execute()
             gamification_settings = {}
             if settings_response.data and len(settings_response.data) > 0:
@@ -519,7 +542,8 @@ class ProfileView(ui.View):
                 total_members=total_members,
                 inventory_items=inventory_items,
                 equipped_background=background_url,
-                equipped_avatar=avatar_url
+                equipped_avatar=avatar_url,
+                profile_bio=profile_bio
             )
             
             return image_buffer
@@ -548,6 +572,12 @@ class ProfileView(ui.View):
             profile_data = profile_response.data[0]
             total_xp = profile_data.get('xp', 0)
             message_count = profile_data.get('message_count', 0)
+            
+            # Buscar bio separadamente
+            bio_response = self.bot.supabase_client.table("gamification_profiles").select(
+                "profile_bio"
+            ).eq("user_id", target_user.id).eq("guild_id", self.guild_id).execute()
+            profile_bio = bio_response.data[0].get('profile_bio', '') if bio_response.data else ''
             
             current_background = profile_data.get('profile_background_url')
             current_avatar = profile_data.get('profile_avatar_url')
@@ -594,7 +624,8 @@ class ProfileView(ui.View):
                 total_members=total_members,
                 inventory_items=inventory_items,
                 equipped_background=bg_url,
-                equipped_avatar=avatar_url
+                equipped_avatar=avatar_url,
+                profile_bio=profile_bio
             )
             
             return image_buffer
@@ -602,7 +633,7 @@ class ProfileView(ui.View):
             logging.error(f"Erro ao gerar preview: {e}")
             return None
     
-    @ui.button(label="🎨 Fundo", style=discord.ButtonStyle.primary, custom_id="selecionar_fundo", row=0)
+    @ui.button(label="Fundo", style=discord.ButtonStyle.primary, custom_id="selecionar_fundo", row=0)
     async def selecionar_fundo(self, interaction: Interaction, button: ui.Button):
         if not self.fundos:
             await interaction.response.send_message("Você não possui fundos de perfil! Compre na loja.", ephemeral=True)
@@ -618,16 +649,16 @@ class ProfileView(ui.View):
         preview_buffer = await self.get_preview(self.target_user, preview_background_url=item_url)
         
         if preview_buffer:
-            embed = Embed(title=f"📊 Perfil de {self.target_user.display_name}", color=discord.Color.blurple())
+            embed = Embed(title=f"Perfil de {self.target_user.display_name}", color=discord.Color.blurple())
             embed.set_image(url="attachment://profile_card.png")
             await interaction.response.edit_message(embed=embed, attachments=[File(preview_buffer, filename="profile_card.png")], view=view)
         else:
             view = ItemNavigatorView(self.bot, self.target_user, self.guild_id, self.fundos, "fundo_perfil", self)
             item_name = item.get('item_name', 'Fundo')
-            embed = Embed(title="🎨 Selecione um Fundo", description=f"**{item_name}**", color=discord.Color.blurple())
+            embed = Embed(title="Selecione um Fundo", description=f"**{item_name}**", color=discord.Color.blurple())
             await interaction.response.edit_message(embed=embed, view=view)
     
-    @ui.button(label="👤 Avatar", style=discord.ButtonStyle.primary, custom_id="selecionar_avatar", row=0)
+    @ui.button(label="Avatar", style=discord.ButtonStyle.primary, custom_id="selecionar_avatar", row=0)
     async def selecionar_avatar(self, interaction: Interaction, button: ui.Button):
         if not self.avatares:
             await interaction.response.send_message("Você não possui avatares de perfil! Compre na loja.", ephemeral=True)
@@ -642,14 +673,68 @@ class ProfileView(ui.View):
         
         if preview_buffer:
             view = ItemNavigatorView(self.bot, self.target_user, self.guild_id, self.avatares, "avatar_perfil", self)
-            embed = Embed(title=f"📊 Perfil de {self.target_user.display_name}", color=discord.Color.blurple())
+            embed = Embed(title=f"Perfil de {self.target_user.display_name}", color=discord.Color.blurple())
             embed.set_image(url="attachment://profile_card.png")
             await interaction.response.edit_message(embed=embed, attachments=[File(preview_buffer, filename="profile_card.png")], view=view)
         else:
             view = ItemNavigatorView(self.bot, self.target_user, self.guild_id, self.avatares, "avatar_perfil", self)
             item_name = item.get('item_name', 'Avatar')
-            embed = Embed(title="👤 Selecione um Avatar", description=f"**{item_name}**", color=discord.Color.blurple())
+            embed = Embed(title="Selecione um Avatar", description=f"**{item_name}**", color=discord.Color.blurple())
             await interaction.response.edit_message(embed=embed, view=view)
+    
+    @ui.button(label="Bio", style=discord.ButtonStyle.secondary, custom_id="editar_bio", row=0)
+    async def editar_bio(self, interaction: Interaction, button: ui.Button):
+        await interaction.response.send_modal(BioModal(self.bot, self.target_user, self.guild_id, self.points_name))
+    
+    @ui.button(label="Privado", style=discord.ButtonStyle.danger, custom_id="alternar_privado", row=0)
+    async def alternar_privado(self, interaction: Interaction, button: ui.Button):
+        try:
+            try:
+                profile_response = self.bot.supabase_client.table("gamification_profiles").select("is_private").eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
+                current_state = profile_response.data[0].get('is_private', False) if profile_response.data else False
+            except:
+                current_state = False
+            
+            new_state = not current_state
+            
+            self.bot.supabase_client.table("gamification_profiles").update({
+                "is_private": new_state
+            }).eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
+            
+            status = "privado" if new_state else "público"
+            await interaction.response.send_message(f"Perfil alterado para **{status}**!", ephemeral=True)
+        except Exception as e:
+            logging.error(f"Erro ao alternar privacidade: {e}")
+            await interaction.response.send_message("Erro ao alterar privacidade.", ephemeral=True)
+
+
+class BioModal(ui.Modal):
+    def __init__(self, bot, target_user, guild_id, points_name):
+        super().__init__(title="Editar Bio do Perfil")
+        self.bot = bot
+        self.target_user = target_user
+        self.guild_id = guild_id
+        self.points_name = points_name
+        
+        self.bio = ui.TextInput(
+            label="Sua Bio",
+            placeholder="Escreva algo sobre você...",
+            style=TextStyle.short,
+            max_length=60,
+            required=False
+        )
+        self.add_item(self.bio)
+    
+    async def on_submit(self, interaction: Interaction):
+        try:
+            self.bot.supabase_client.table("gamification_profiles").update({
+                "profile_bio": self.bio.value
+            }).eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
+            
+            await interaction.response.send_message("✅ Bio atualizada com sucesso!", ephemeral=True)
+        except Exception as e:
+            logging.error(f"Erro ao salvar bio: {e}")
+            await interaction.response.send_message("❌ Erro ao salvar bio. As colunas não existem no banco de dados.", ephemeral=True)
 
 
 class ItemNavigatorView(ui.View):
@@ -722,7 +807,7 @@ class ItemNavigatorView(ui.View):
         preview_buffer = await self.parent_view.get_preview(self.target_user, preview_url, avatar_url)
         
         if preview_buffer:
-            embed = Embed(title=f"📊 {item.get('item_name', 'Item')}", color=discord.Color.blurple())
+            embed = Embed(title=f"{item.get('item_name', 'Item')}", color=discord.Color.blurple())
             embed.set_image(url="attachment://profile_card.png")
             await interaction.response.edit_message(embed=embed, attachments=[File(preview_buffer, filename="profile_card.png")], view=self)
         else:
@@ -745,7 +830,7 @@ class ItemNavigatorView(ui.View):
         preview_buffer = await self.parent_view.get_preview(self.target_user, preview_url, avatar_url)
         
         if preview_buffer:
-            embed = Embed(title=f"📊 {item.get('item_name', 'Item')}", color=discord.Color.blurple())
+            embed = Embed(title=f"{item.get('item_name', 'Item')}", color=discord.Color.blurple())
             embed.set_image(url="attachment://profile_card.png")
             await interaction.response.edit_message(embed=embed, attachments=[File(preview_buffer, filename="profile_card.png")], view=self)
         else:
@@ -768,7 +853,7 @@ class ItemNavigatorView(ui.View):
             image_buffer = await self.parent_view.update_profile(interaction)
             
             if image_buffer:
-                embed = Embed(title=f"📊 Perfil de {self.target_user.display_name}", color=discord.Color.blurple())
+                embed = Embed(title=f"Perfil de {self.target_user.display_name}", color=discord.Color.blurple())
                 embed.set_image(url="attachment://profile_card.png")
                 
                 new_view = ProfileView(self.bot, self.target_user, self.guild_id, self.parent_view.points_name)
@@ -795,6 +880,10 @@ class PerfilCommand(commands.Cog):
         await interaction.response.defer(ephemeral=True)
         guild_id = interaction.guild.id
         
+        viewing_user = interaction.user
+        is_owner = target_user.id == viewing_user.id
+        is_admin = viewing_user.guild_permissions.administrator
+        
         try:
             settings_response = self.bot.supabase_client.table("server_configurations").select("settings").eq("server_guild_id", guild_id).execute()
             gamification_settings = {}
@@ -812,6 +901,23 @@ class PerfilCommand(commands.Cog):
                 return await interaction.followup.send(f"{target_user.mention} ainda não tem {points_name}. Comece a conversar para ganhar XP!")
             
             profile_data = profile_response.data[0]
+            
+            # Verificar privacidade e bio
+            privacy_response = self.bot.supabase_client.table("gamification_profiles").select(
+                "profile_bio, is_private"
+            ).eq("user_id", target_user.id).eq("guild_id", guild_id).execute()
+            profile_bio = privacy_response.data[0].get('profile_bio', '') if privacy_response.data else ''
+            is_private = privacy_response.data[0].get('is_private', False) if privacy_response.data else False
+            
+            if is_private and not is_owner and not is_admin:
+                embed = Embed(
+                    title=f"🔒 Perfil de {target_user.display_name}",
+                    description="Este perfil é **privado**.\n\nApenas o próprio usuário e administradores podem ver os detalhes.",
+                    color=discord.Color.red()
+                )
+                embed.set_thumbnail(url=target_user.display_avatar.url)
+                return await interaction.followup.send(embed=embed, ephemeral=True)
+            
             total_xp = profile_data.get('xp', 0)
             message_count = profile_data.get('message_count', 0)
             background_url = profile_data.get('profile_background_url')
@@ -859,11 +965,12 @@ class PerfilCommand(commands.Cog):
                 total_members=total_members,
                 inventory_items=inventory_items,
                 equipped_background=background_url,
-                equipped_avatar=avatar_url
+                equipped_avatar=avatar_url,
+                profile_bio=profile_bio
             )
             
             embed = Embed(
-                title=f"📊 Perfil de {target_user.display_name}",
+                title=f"Perfil de {target_user.display_name}",
                 color=discord.Color.blurple()
             )
             embed.set_image(url="attachment://profile_card.png")
