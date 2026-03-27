@@ -78,6 +78,15 @@ class AgentIA(commands.Cog):
         if not config or not config.get("enabled"):
             return await interaction.followup.send("❌ O Agente IA está desativado ou não configurado.", ephemeral=True)
 
+        allowed_role_id = config.get("allowed_role_id")
+        if allowed_role_id:
+            allowed_role = interaction.guild.get_role(allowed_role_id)
+            if allowed_role and allowed_role not in interaction.user.roles:
+                return await interaction.followup.send(
+                    f"❌ Você precisa ter o cargo {allowed_role.mention if allowed_role else ''} para usar a IA.",
+                    ephemeral=True
+                )
+
         channel = await self.create_private_channel(interaction, config)
         if not channel: return await interaction.followup.send("❌ Erro ao criar seu canal de IA.", ephemeral=True)
 
@@ -109,6 +118,18 @@ class AgentIA(commands.Cog):
         async with lock, message.channel.typing():
             config = await self.get_config(message.guild.id)
             if not config: return
+
+            allowed_role_id = config.get("allowed_role_id")
+            if allowed_role_id:
+                allowed_role = message.guild.get_role(allowed_role_id)
+                if allowed_role and allowed_role not in message.author.roles:
+                    return await message.channel.send(
+                        embed=discord.Embed(
+                            title="❌ Acesso Removido",
+                            description="Você perdeu o cargo necessário para usar a IA e não pode mais continuar esta conversa.",
+                            color=discord.Color.red()
+                        )
+                    )
 
             conversation_history = await self.get_conversation(message.guild.id, message.author.id)
             api_history = [{'role': msg['role'], 'content': msg['content']} for msg in conversation_history]
