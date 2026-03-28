@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord import app_commands, Interaction, File, ui, Embed
+from discord import app_commands, Interaction, File, ui, Embed, ButtonStyle, TextStyle
 import logging
 from PIL import Image, ImageDraw, ImageFont
 import requests
@@ -120,7 +120,9 @@ async def create_rank_card(
     total_members: int = 0,
     inventory_items: list = None,
     equipped_background: str = None,
-    equipped_avatar: str = None
+    equipped_avatar: str = None,
+    profile_bio: str = "",
+    coin_image_url: str = None
 ) -> BytesIO:
     """Gera uma imagem de cartão de perfil moderno e bonito"""
     
@@ -257,6 +259,22 @@ async def create_rank_card(
     
     draw.text((210 * scale_factor, 145 * scale_factor), level_badge, font=stat_value_font, fill=level_color)
     
+    # ========== CAMPO BIO (canto superior direito) ==========
+    if profile_bio:
+        bio_box_x = 580 * scale_factor
+        bio_box_y = 55 * scale_factor
+        
+        draw.text((bio_box_x, bio_box_y), "Sobre mim...", font=stat_label_font, fill=(139, 92, 246))
+        
+        bio_text_y = bio_box_y + 25 * scale_factor
+        max_chars = 40
+        bio_lines = []
+        for i in range(0, len(profile_bio), max_chars):
+            bio_lines.append(profile_bio[i:i + max_chars])
+        
+        for i, line in enumerate(bio_lines[:3]):
+            draw.text((bio_box_x, bio_text_y + i * 22 * scale_factor), line, font=tiny_font, fill=(255, 255, 255))
+    
     # ========== CARDS DE ESTATÍSTICAS (abaixo da barra de XP) ==========
     card_spacing = 12 * scale_factor
     stat_card_width = 140 * scale_factor
@@ -281,8 +299,26 @@ async def create_rank_card(
     stat_card_width_large = 280 * scale_factor
     stats_container3 = create_stats_card(stat_card_width_large, 100 * scale_factor, 10 * scale_factor)
     card.paste(stats_container3, (stats_x3, stats_y), stats_container3)
-    draw.text((stats_x3 + 12 * scale_factor, stats_y + 10 * scale_factor), f"💎 {points_name.upper()}", font=stat_label_font, fill=(99, 102, 241))
-    draw.text((stats_x3 + 12 * scale_factor, stats_y + 45 * scale_factor), f"{total_xp:,}", font=stat_value_font, fill=(255, 215, 0))
+    draw.text((stats_x3 + 12 * scale_factor, stats_y + 10 * scale_factor), f"{points_name.upper()}", font=stat_label_font, fill=(99, 102, 241))
+    
+    # Renderizar imagem da moeda (padrão ou customizada)
+    coin_offset = 0
+    default_coin_url = "https://media.discordapp.net/attachments/1487374232886448248/1487386517985951814/correto_1446515346201776283_1774.webp?ex=69c8f424&is=69c7a2a4&hm=3890867b1d1733aacd3ec8474964da72e89de91a67f408c3cf5d6f2d93c62aaa&=&format=webp"
+    coin_url = coin_image_url if coin_image_url else default_coin_url
+    
+    try:
+        coin_response = requests.get(coin_url, timeout=10)
+        coin_img = Image.open(BytesIO(coin_response.content)).convert("RGBA")
+        coin_size = 35 * scale_factor
+        coin_img = coin_img.resize((coin_size, coin_size), Image.Resampling.LANCZOS)
+        coin_x = stats_x3 + 12 * scale_factor
+        coin_y = stats_y + 45 * scale_factor
+        card.paste(coin_img, (coin_x, coin_y), coin_img)
+        coin_offset = coin_size + 5 * scale_factor
+    except Exception as e:
+        logging.error(f"Erro ao carregar imagem da moeda: {e}")
+    
+    draw.text((stats_x3 + 12 * scale_factor + coin_offset, stats_y + 45 * scale_factor), f"{total_xp:,}", font=stat_value_font, fill=(255, 215, 0))
     
     # ========== BARRA DE XP ==========
     bar_x = 40 * scale_factor
@@ -650,6 +686,69 @@ class ProfileView(ui.View):
             item_name = item.get('item_name', 'Avatar')
             embed = Embed(title="👤 Selecione um Avatar", description=f"**{item_name}**", color=discord.Color.blurple())
             await interaction.response.edit_message(embed=embed, view=view)
+    
+    @ui.button(label="📝 Bio", style=discord.ButtonStyle.secondary, custom_id="editar_bio", row=0)
+    async def editar_bio(self, interaction: Interaction, button: ui.Button):
+        await interaction.response.send_modal(BioModal(self.bot, self.target_user, self.guild_id, self.points_name))
+    
+    @ui.button(label="🔒 Privado", style=discord.ButtonStyle.danger, custom_id="alternar_privado", row=0)
+    async def alternar_privado(self, interaction: Interaction, button: ui.Button):
+        try:
+            profile_response = self.bot.supabase_client.table("gamification_profiles").select("is_private").eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
+            current_state = profile_response.data[0].get('is_private', False) if profile_response.data else False
+            
+            new_state = not current_state
+            
+            self.bot.supabase_client.table("gamification_profiles").update({
+                "is_private": new_state
+            }).eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
+            
+            status = "privado" if new_state else "público"
+            await interaction.response.send_message(f"Perfil alterado para **{status}**!", ephemeral=True)
+        except Exception as e:
+            logging.error(f"Erro ao alternar privacidade: {e}")
+            await interaction.response.send_message("Erro ao alterar privacidade.", ephemeral=True)
+
+
+class BioModal(ui.Modal):
+    def __init__(self, bot: commands.Bot, target_user, guild_id: int, points_name: str):
+        super().__init__(title="Editar Bio")
+        self.bot = bot
+        self.target_user = target_user
+        self.guild_id = guild_id
+        self.points_name = points_name
+        
+        profile_response = bot.supabase_client.table("gamification_profiles").select("profile_bio").eq("user_id", target_user.id).eq("guild_id", guild_id).execute()
+        current_bio = profile_response.data[0].get('profile_bio', '') if profile_response.data else ''
+        
+        self.bio = ui.TextInput(label="Sua Bio", style=TextStyle.long, default=current_bio, placeholder="Escreva algo sobre você...", max_length=100, required=False)
+        self.add_item(self.bio)
+    
+    async def on_submit(self, interaction: Interaction):
+        try:
+            self.bot.supabase_client.table("gamification_profiles").update({
+                "profile_bio": self.bio.value
+            }).eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
+            
+            image_buffer = await create_rank_card(
+                user_avatar_url=self.target_user.display_avatar.url,
+                user_name=self.target_user.display_name,
+                current_level=1,
+                current_xp_in_level=0,
+                xp_for_level_up=300,
+                points_name=self.points_name,
+                total_xp=0,
+                profile_bio=self.bio.value
+            )
+            
+            embed = Embed(title=f"📊 Bio de {self.target_user.display_name}", color=discord.Color.blurple())
+            embed.set_image(url="attachment://profile_card.png")
+            
+            view = ProfileView(self.bot, self.target_user, self.guild_id, self.points_name)
+            await interaction.response.send_message(embed=embed, file=File(image_buffer, filename="profile_card.png"), view=view, ephemeral=True)
+        except Exception as e:
+            logging.error(f"Erro ao salvar bio: {e}")
+            await interaction.response.send_message("Erro ao salvar bio.", ephemeral=True)
 
 
 class ItemNavigatorView(ui.View):
@@ -802,10 +901,11 @@ class PerfilCommand(commands.Cog):
                 gamification_settings = settings_response.data[0].get('settings', {}).get('gamification_xp', {})
             
             points_name = gamification_settings.get('points_name', 'XP')
+            coin_image_url = gamification_settings.get('coin_image_url')
             xp_per_level_base = int(gamification_settings.get('xp_per_level_base', 300)) or 300
             
             profile_response = self.bot.supabase_client.table("gamification_profiles").select(
-                "xp, profile_background_url, profile_avatar_url, message_count"
+                "xp, profile_background_url, profile_avatar_url, message_count, profile_bio, is_private"
             ).eq("user_id", target_user.id).eq("guild_id", guild_id).execute()
             
             if not profile_response.data:
@@ -816,6 +916,8 @@ class PerfilCommand(commands.Cog):
             message_count = profile_data.get('message_count', 0)
             background_url = profile_data.get('profile_background_url')
             avatar_url = profile_data.get('profile_avatar_url')
+            profile_bio = profile_data.get('profile_bio', '')
+            is_private = profile_data.get('is_private', False)
             
             calculated_level = total_xp // xp_per_level_base
             xp_at_start_of_level = calculated_level * xp_per_level_base
@@ -843,6 +945,19 @@ class PerfilCommand(commands.Cog):
             global xp_for_level_base
             xp_for_level_base = xp_per_level_base
             
+            viewing_user = interaction.user
+            is_owner = target_user.id == viewing_user.id
+            is_admin = viewing_user.guild_permissions.administrator
+            
+            if is_private and not is_owner and not is_admin:
+                embed = Embed(
+                    title=f"🔒 Perfil de {target_user.display_name}",
+                    description="Este perfil é **privado**.\n\nApenas o próprio usuário e administradores podem ver os detalhes.",
+                    color=discord.Color.red()
+                )
+                embed.set_thumbnail(url=target_user.display_avatar.url)
+                return await interaction.followup.send(embed=embed, ephemeral=True)
+            
             image_buffer = await create_rank_card(
                 user_avatar_url=target_user.display_avatar.url,
                 custom_avatar_url=avatar_url,
@@ -859,7 +974,9 @@ class PerfilCommand(commands.Cog):
                 total_members=total_members,
                 inventory_items=inventory_items,
                 equipped_background=background_url,
-                equipped_avatar=avatar_url
+                equipped_avatar=avatar_url,
+                profile_bio=profile_bio,
+                coin_image_url=coin_image_url
             )
             
             embed = Embed(
