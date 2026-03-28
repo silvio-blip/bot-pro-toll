@@ -8,6 +8,58 @@ from io import BytesIO
 from datetime import datetime
 
 
+COLOR_MAP = {
+    "branco": (255, 255, 255),
+    "preto": (0, 0, 0),
+    "vermelho": (255, 0, 0),
+    "verde": (0, 255, 0),
+    "azul": (0, 0, 255),
+    "amarelo": (255, 255, 0),
+    "dourado": (255, 215, 0),
+    "roxo": (138, 43, 226),
+    "laranja": (255, 165, 0),
+    "rosa": (255, 105, 180),
+    "ciano": (0, 255, 255),
+    "cinza": (128, 128, 128),
+}
+
+
+def parse_color(color_value: str) -> tuple:
+    if not color_value:
+        return (255, 255, 255)
+    color_value = color_value.strip().lower()
+    if color_value in COLOR_MAP:
+        return COLOR_MAP[color_value]
+    try:
+        if ',' in color_value:
+            parts = color_value.split(',')
+        elif ' ' in color_value:
+            parts = color_value.split(' ')
+        else:
+            return (255, 255, 255)
+        if len(parts) >= 3:
+            r = int(parts[0].strip())
+            g = int(parts[1].strip())
+            b = int(parts[2].strip())
+            return (max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b)))
+    except:
+        pass
+    return (255, 255, 255)
+
+
+def get_user_title(level: int, titles: list) -> tuple:
+    if not titles:
+        return None, (255, 255, 255)
+    user_title = None
+    title_color = (255, 255, 255)
+    for title in sorted(titles, key=lambda x: x.get("level_required", 1), reverse=True):
+        if level >= title.get("level_required", 1):
+            user_title = title.get("name", "")
+            title_color = parse_color(title.get("color", "branco"))
+            break
+    return user_title, title_color
+
+
 def create_modern_background(width: int, height: int) -> Image.Image:
     """Cria um fundo moderno com gradiente e partículas"""
     img = Image.new("RGBA", (width, height))
@@ -122,12 +174,15 @@ async def create_rank_card(
     equipped_background: str = None,
     equipped_avatar: str = None,
     profile_bio: str = '',
-    coin_image_url: str = None
+    coin_image_url: str = None,
+    titles: list = None
 ) -> BytesIO:
     """Gera uma imagem de cartão de perfil moderno e bonito"""
     
     if inventory_items is None:
         inventory_items = []
+    if titles is None:
+        titles = []
     
     card_width, card_height = 1000, 700
     
@@ -236,28 +291,9 @@ async def create_rank_card(
     
     draw.text((210 * scale_factor, 105 * scale_factor), f"NÍVEL {current_level}", font=level_font, fill=(255, 215, 0))
     
-    level_badge = ""
-    level_color = (255, 255, 255)
-    if current_level >= 100:
-        level_badge = "👑 Lendário"
-        level_color = (255, 215, 0)
-    elif current_level >= 50:
-        level_badge = "👑 Mestre"
-        level_color = (255, 215, 0)
-    elif current_level >= 25:
-        level_badge = "🔥 Elite"
-        level_color = (255, 100, 50)
-    elif current_level >= 10:
-        level_badge = "⭐ Avançado"
-        level_color = (100, 200, 255)
-    elif current_level >= 5:
-        level_badge = "✨ Iniciante"
-        level_color = (150, 255, 150)
-    else:
-        level_badge = "🌱 Novato"
-        level_color = (180, 180, 180)
-    
-    draw.text((210 * scale_factor, 145 * scale_factor), level_badge, font=stat_value_font, fill=level_color)
+    user_title, title_color = get_user_title(current_level, titles)
+    if user_title:
+        draw.text((210 * scale_factor, 145 * scale_factor), f"{user_title}", font=stat_label_font, fill=title_color)
     
     # ========== CARDS DE ESTATÍSTICAS (abaixo da barra de XP) ==========
     card_spacing = 12 * scale_factor
@@ -572,73 +608,7 @@ class ProfileView(ui.View):
             points_name = gamification_settings.get('points_name', 'XP')
             xp_per_level_base = int(gamification_settings.get('xp_per_level_base', 300)) or 300
             coin_image_url = gamification_settings.get('coin_image_url')
-            
-            total_xp = profile_data.get('xp', 0)
-            message_count = profile_data.get('message_count', 0)
-            background_url = profile_data.get('profile_background_url')
-            avatar_url = profile_data.get('profile_avatar_url')
-            profile_bio = profile_data.get('profile_bio', '')
-            
-            calculated_level = total_xp // xp_per_level_base
-            xp_at_start_of_level = calculated_level * xp_per_level_base
-            xp_for_next_level_total = (calculated_level + 1) * xp_per_level_base
-            xp_in_this_level = total_xp - xp_at_start_of_level
-            total_xp_for_this_level_up = xp_for_next_level_total - xp_at_start_of_level
-            
-            days_in_server = 0
-            if self.target_user.joined_at:
-                delta = datetime.utcnow() - self.target_user.joined_at.replace(tzinfo=None)
-                days_in_server = delta.days
-            
-            all_profiles = self.bot.supabase_client.table("gamification_profiles").select("user_id", "xp").eq("guild_id", self.guild_id).order("xp", desc=True).execute()
-            total_members = len(all_profiles.data) if all_profiles.data else 0
-            rank_position = 1
-            if all_profiles.data:
-                for p in all_profiles.data:
-                    if p['user_id'] == self.target_user.id:
-                        break
-                    rank_position += 1
-            
-            inventory_response = self.bot.supabase_client.table("user_inventories").select("*").eq("guild_id", self.guild_id).eq("user_id", self.target_user.id).execute()
-            inventory_items = inventory_response.data if inventory_response.data else []
-            
-            image_buffer = await create_rank_card(
-                user_avatar_url=self.target_user.display_avatar.url,
-                custom_avatar_url=avatar_url,
-                user_name=self.target_user.display_name,
-                current_level=calculated_level,
-                current_xp_in_level=xp_in_this_level,
-                xp_for_level_up=total_xp_for_this_level_up,
-                points_name=points_name,
-                total_xp=total_xp,
-                background_url=background_url,
-                message_count=message_count,
-                days_in_server=days_in_server,
-                rank_position=rank_position,
-                total_members=total_members,
-                inventory_items=inventory_items,
-                equipped_background=background_url,
-                equipped_avatar=avatar_url,
-                profile_bio=profile_bio,
-                coin_image_url=coin_image_url
-            )
-            
-            return image_buffer
-        except Exception as e:
-            logging.error(f"Erro ao atualizar perfil: {e}")
-            return None
-    
-    async def get_preview(self, target_user, preview_background_url=None, preview_avatar_url=None):
-        """Gera uma prévia do perfil com background ou avatar temporário"""
-        try:
-            settings_response = self.bot.supabase_client.table("server_configurations").select("settings").eq("server_guild_id", self.guild_id).execute()
-            gamification_settings = {}
-            if settings_response.data and len(settings_response.data) > 0:
-                gamification_settings = settings_response.data[0].get('settings', {}).get('gamification_xp', {})
-            
-            points_name = gamification_settings.get('points_name', 'XP')
-            xp_per_level_base = int(gamification_settings.get('xp_per_level_base', 300)) or 300
-            coin_image_url = gamification_settings.get('coin_image_url')
+            titles = gamification_settings.get('titles', [])
             
             profile_response = self.bot.supabase_client.table("gamification_profiles").select(
                 "xp, profile_background_url, profile_avatar_url, message_count, profile_bio, is_private"
@@ -699,7 +669,8 @@ class ProfileView(ui.View):
                 equipped_background=bg_url,
                 equipped_avatar=avatar_url,
                 profile_bio=profile_bio,
-                coin_image_url=coin_image_url
+                coin_image_url=coin_image_url,
+                titles=titles
             )
             
             return image_buffer
@@ -811,6 +782,7 @@ class BioModal(ui.Modal):
                 gamification_settings = settings_response.data[0].get('settings', {}).get('gamification_xp', {})
             coin_image_url = gamification_settings.get('coin_image_url')
             xp_per_level_base = int(gamification_settings.get('xp_per_level_base', 300)) or 300
+            titles = gamification_settings.get('titles', [])
             
             profile_response = self.bot.supabase_client.table("gamification_profiles").select(
                 "xp, profile_background_url, profile_avatar_url"
@@ -838,7 +810,8 @@ class BioModal(ui.Modal):
                 total_xp=total_xp,
                 background_url=bg_url,
                 profile_bio=bio_text,
-                coin_image_url=coin_image_url
+                coin_image_url=coin_image_url,
+                titles=titles
             )
             filename = "profile_card.png"
             
@@ -1010,6 +983,7 @@ class PerfilCommand(commands.Cog):
             points_name = gamification_settings.get('points_name', 'XP')
             xp_per_level_base = int(gamification_settings.get('xp_per_level_base', 300)) or 300
             coin_image_url = gamification_settings.get('coin_image_url')
+            titles = gamification_settings.get('titles', [])
             
             profile_response = self.bot.supabase_client.table("gamification_profiles").select(
                 "xp, profile_background_url, profile_avatar_url, message_count, profile_bio, is_private"
@@ -1074,7 +1048,8 @@ class PerfilCommand(commands.Cog):
                 equipped_background=background_url,
                 equipped_avatar=avatar_url,
                 profile_bio=profile_bio,
-                coin_image_url=coin_image_url
+                coin_image_url=coin_image_url,
+                titles=titles
             )
             
             embed = Embed(

@@ -4,7 +4,7 @@
 
 import discord
 from discord.ext import commands
-from discord import app_commands, ui, Interaction, ButtonStyle, SelectOption, TextStyle
+from discord import app_commands, ui, Interaction, ButtonStyle, SelectOption, TextStyle, Embed
 import logging
 
 # --- Importando componentes de outros arquivos ---
@@ -228,6 +228,319 @@ class DailyRewardConfigModal(ui.Modal, title="Config. Recompensa Diária"):
             await i.followup.send("Configurações salvas!" if success else "Erro ao salvar!", ephemeral=True)
         else:
             await i.followup.send("Configurações salvas.", ephemeral=True)
+
+COLOR_MAP = {
+    "branco": "255,255,255",
+    "preto": "0,0,0",
+    "vermelho": "255,0,0",
+    "verde": "0,255,0",
+    "azul": "0,0,255",
+    "amarelo": "255,255,0",
+    "dourado": "255,215,0",
+    "roxo": "138,43,226",
+    "laranja": "255,165,0",
+    "rosa": "255,105,180",
+    "ciano": "0,255,255",
+    "cinza": "128,128,128",
+    "Branco": "255,255,255",
+    "Preto": "0,0,0",
+    "Vermelho": "255,0,0",
+    "Verde": "0,255,0",
+    "Azul": "0,0,255",
+    "Amarelo": "255,255,0",
+    "Dourado": "255,215,0",
+    "Roxo": "138,43,226",
+    "Laranja": "255,165,0",
+    "Rosa": "255,105,180",
+    "Ciano": "0,255,255",
+    "Cinza": "128,128,128",
+}
+
+class TitlesConfigModal(ui.Modal, title="Adicionar Título"):
+    def __init__(self, bot, config: dict):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.config = config
+        self.titles = config.get("titles", []) or []
+        
+        self.add_item(ui.TextInput(label="Nível Requerido", placeholder="Ex: 10", required=True))
+        self.add_item(ui.TextInput(label="Nome do Título", placeholder="Ex: Veterano", required=True))
+        self.add_item(ui.TextInput(label="Cor (nome ou RGB)", placeholder="verde, dourado ou 255,215,0", required=False, default="branco"))
+    
+    async def on_submit(self, i: Interaction):
+        await i.response.defer(ephemeral=True)
+        guild_id = i.guild.id
+        
+        nivel = self.children[0].value.strip()
+        nome = self.children[1].value.strip()
+        cor = self.children[2].value.strip() or "branco"
+        
+        if not nivel.isdigit():
+            await i.followup.send("❌ O nível deve ser um número!", ephemeral=True)
+            return
+        
+        titles = list(self.titles)
+        titles.append({
+            "level_required": int(nivel),
+            "name": nome,
+            "color": cor
+        })
+        
+        titles.sort(key=lambda x: x.get("level_required", 1))
+        
+        if hasattr(self.bot, 'get_and_update_server_settings'):
+            def update_config(settings: dict):
+                settings.setdefault('gamification_xp', {})['titles'] = titles
+            
+            success = await self.bot.get_and_update_server_settings(guild_id, update_config)
+            if success:
+                await i.followup.send(f"✅ Título '{nome}' adicionado para nível {nivel}!", ephemeral=True)
+                new_config = await get_specific_config(self.bot, guild_id, 'gamification_xp')
+                view = TitlesSettingsView(self.bot, new_config)
+                embed = Embed(title="🏷️ Títulos/Patentes", description="Gerencie os títulos dos usuários no perfil.", color=discord.Color.blurple())
+                try:
+                    await i.message.edit(embed=embed, view=view)
+                except:
+                    pass
+            else:
+                await i.followup.send("❌ Erro ao salvar!", ephemeral=True)
+        else:
+            await i.followup.send("✅ Título adicionado (salvamento desabilitado).", ephemeral=True)
+
+
+class TitlesListSelect(ui.Select):
+    def __init__(self, bot, titles: list):
+        self.bot = bot
+        self.titles = titles
+        options = []
+        for idx, t in enumerate(titles):
+            options.append(SelectOption(
+                label=f"Nível {t.get('level_required', 1)} - {t.get('name', 'Sem nome')}",
+                value=str(idx),
+                description=f"Cor: {t.get('color', 'branco')}"
+            ))
+        if not options:
+            options.append(SelectOption(label="Nenhum título", value="none"))
+        super().__init__(placeholder="Selecione um título...", options=options)
+    
+    async def callback(self, i: Interaction):
+        if self.values[0] == "none":
+            await i.response.send_message("Nenhum título configurado.", ephemeral=True)
+            return
+        
+        idx = int(self.values[0])
+        title = self.titles[idx]
+        
+        await i.response.send_modal(TitleEditModal(self.bot, self.titles, idx, title))
+
+
+class TitleEditModal(ui.Modal, title="Editar Título"):
+    def __init__(self, bot, titles: list, idx: int, title: dict):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.titles = titles
+        self.idx = idx
+        self.original_title = title
+        
+        self.add_item(ui.TextInput(label="Nível Requerido", default=str(title.get('level_required', 1)), required=True))
+        self.add_item(ui.TextInput(label="Nome do Título", default=title.get('name', ''), required=True))
+        self.add_item(ui.TextInput(label="Cor (nome ou RGB)", default=title.get('color', 'branco'), required=False))
+    
+    async def on_submit(self, i: Interaction):
+        await i.response.defer(ephemeral=True)
+        guild_id = i.guild.id
+        
+        nivel = self.children[0].value.strip()
+        nome = self.children[1].value.strip()
+        cor = self.children[2].value.strip() or "branco"
+        
+        if not nivel.isdigit():
+            await i.followup.send("❌ O nível deve ser um número!", ephemeral=True)
+            return
+        
+        new_title = {
+            "level_required": int(nivel),
+            "name": nome,
+            "color": cor
+        }
+        
+        titles = list(self.titles)
+        found_idx = None
+        for idx, t in enumerate(titles):
+            if t.get("name") == self.original_title.get("name") and t.get("level_required") == self.original_title.get("level_required"):
+                found_idx = idx
+                break
+        
+        if found_idx is None:
+            await i.followup.send("❌ Título não encontrado!", ephemeral=True)
+            return
+        
+        titles[found_idx] = new_title
+        titles.sort(key=lambda x: x.get("level_required", 1))
+        
+        if hasattr(self.bot, 'get_and_update_server_settings'):
+            def update_config(settings: dict):
+                settings.setdefault('gamification_xp', {})['titles'] = titles
+            
+            success = await self.bot.get_and_update_server_settings(guild_id, update_config)
+            if success:
+                await i.followup.send(f"✅ Título atualizado!", ephemeral=True)
+                new_config = await get_specific_config(self.bot, guild_id, 'gamification_xp')
+                view = TitlesSettingsView(self.bot, new_config)
+                embed = Embed(title="🏷️ Títulos/Patentes", description="Gerencie os títulos dos usuários no perfil.", color=discord.Color.blurple())
+                try:
+                    await i.message.edit(embed=embed, view=view)
+                except:
+                    pass
+            else:
+                await i.followup.send("❌ Erro ao salvar!", ephemeral=True)
+        else:
+            await i.followup.send("✅ Título atualizado (salvamento desabilitado).", ephemeral=True)
+
+
+class TitlesSettingsView(ui.View):
+    def __init__(self, bot, config: dict):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.config = config
+        self.titles = config.get("titles", []) or []
+        
+        titles_text = "Nenhum título configurado."
+        if self.titles:
+            titles_list = []
+            for idx, t in enumerate(self.titles):
+                titles_list.append(f"{idx+1}. Nível {t.get('level_required', 1)} - {t.get('name', 'Sem nome')} (Cor: {t.get('color', 'branco')})")
+            titles_text = "\n".join(titles_list)
+        
+        embed = Embed(title="🏷️ Títulos/Patentes", description=titles_text, color=discord.Color.blurple())
+        embed.add_field(name="Como usar:", value="• **Adicionar**: Cria um novo título\n• **Editar**: Modifica um título existente\n• **Remover**: Exclui um título", inline=False)
+        
+        btn_add = ui.Button(label="➕ Adicionar", style=discord.ButtonStyle.success, custom_id="title_add", row=0)
+        btn_edit = ui.Button(label="✏️ Editar", style=discord.ButtonStyle.primary, custom_id="title_edit", row=0)
+        btn_remove = ui.Button(label="🗑️ Remover", style=discord.ButtonStyle.danger, custom_id="title_remove", row=0)
+        
+        async def btn_add_callback(interaction: Interaction):
+            config = await get_specific_config(self.bot, interaction.guild.id, 'gamification_xp')
+            await interaction.response.send_modal(TitlesConfigModal(self.bot, config))
+        
+        async def btn_edit_callback(interaction: Interaction):
+            config = await get_specific_config(self.bot, interaction.guild.id, 'gamification_xp')
+            titles = config.get("titles", []) or []
+            if not titles:
+                await interaction.response.send_message("Nenhum título para editar!", ephemeral=True)
+                return
+            view = TitleSelectView(self.bot, titles, config)
+            await interaction.response.send_message("Selecione um título para editar:", view=view, ephemeral=True)
+        
+        async def btn_remove_callback(interaction: Interaction):
+            config = await get_specific_config(self.bot, interaction.guild.id, 'gamification_xp')
+            titles = config.get("titles", []) or []
+            if not titles:
+                await interaction.response.send_message("Nenhum título para remover!", ephemeral=True)
+                return
+            view = TitleRemoveView(self.bot, titles, config)
+            await interaction.response.send_message("Selecione um título para remover:", view=view, ephemeral=True)
+        
+        btn_add.callback = btn_add_callback
+        btn_edit.callback = btn_edit_callback
+        btn_remove.callback = btn_remove_callback
+        
+        self.add_item(btn_add)
+        self.add_item(btn_edit)
+        self.add_item(btn_remove)
+
+
+class TitleSelectView(ui.View):
+    def __init__(self, bot, titles: list, config: dict):
+        super().__init__(timeout=60)
+        self.bot = bot
+        self.titles = titles
+        self.config = config
+        
+        options = []
+        for idx, t in enumerate(titles):
+            options.append(SelectOption(
+                label=f"{t.get('name', 'Sem nome')}",
+                description=f"Nível {t.get('level_required', 1)} - Cor: {t.get('color', 'branco')}",
+                value=f"{t.get('name')}|||{t.get('level_required')}"
+            ))
+        
+        select = ui.Select(placeholder="Selecione um título para editar...", options=options, custom_id="title_select_edit")
+        
+        async def callback(interaction: Interaction):
+            selected = interaction.data["values"][0]
+            title_name, title_level = selected.split("|||")
+            title_level = int(title_level)
+            title = None
+            for t in self.titles:
+                if t.get("name") == title_name and t.get("level_required") == title_level:
+                    title = t
+                    break
+            if title:
+                await interaction.response.send_modal(TitleEditModal(self.bot, self.titles, 0, title))
+            else:
+                await interaction.response.send_message("❌ Título não encontrado!", ephemeral=True)
+        
+        select.callback = callback
+        self.add_item(select)
+
+
+class TitleRemoveView(ui.View):
+    def __init__(self, bot, titles: list, config: dict):
+        super().__init__(timeout=60)
+        self.bot = bot
+        self.titles = titles
+        self.config = config
+        
+        options = []
+        for idx, t in enumerate(titles):
+            options.append(SelectOption(
+                label=f"{t.get('name', 'Sem nome')}",
+                description=f"Nível {t.get('level_required', 1)} - Cor: {t.get('color', 'branco')}",
+                value=f"{t.get('name')}|||{t.get('level_required')}"
+            ))
+        
+        select = ui.Select(placeholder="Selecione um título para remover...", options=options, custom_id="title_select_remove", min_values=1, max_values=1)
+        
+        async def callback(interaction: Interaction):
+            selected = interaction.data["values"][0]
+            title_name, title_level = selected.split("|||")
+            title_level = int(title_level)
+            title = None
+            for t in titles:
+                if t.get("name") == title_name and t.get("level_required") == title_level:
+                    title = t
+                    break
+            
+            if title is None:
+                await interaction.response.send_message("❌ Título não encontrado!", ephemeral=True)
+                return
+            
+            guild_id = interaction.guild.id
+            
+            new_titles = [t for t in titles if not (t.get("name") == title_name and t.get("level_required") == title_level)]
+            
+            if hasattr(bot, 'get_and_update_server_settings'):
+                def update_config(settings: dict):
+                    settings.setdefault('gamification_xp', {})['titles'] = new_titles
+                
+                success = await bot.get_and_update_server_settings(guild_id, update_config)
+                if success:
+                    await interaction.response.send_message(f"✅ Título '{title.get('name')}' removido!", ephemeral=True)
+                    new_config = await get_specific_config(bot, guild_id, 'gamification_xp')
+                    view = TitlesSettingsView(bot, new_config)
+                    embed = Embed(title="🏷️ Títulos/Patentes", description="Gerencie os títulos dos usuários no perfil.", color=discord.Color.blurple())
+                    try:
+                        await interaction.message.edit(embed=embed, view=view)
+                    except:
+                        pass
+                else:
+                    await interaction.response.send_message("❌ Erro ao salvar!", ephemeral=True)
+            else:
+                await interaction.response.send_message("✅ Título removido (salvamento desabilitado).", ephemeral=True)
+        
+        select.callback = callback
+        self.add_item(select)
 
 class WelcomeConfigModal(ui.Modal, title="Configuração de Boas-Vindas"):
     def __init__(self, bot, config: dict):
@@ -484,7 +797,8 @@ class GamificacaoSelect(ui.Select):
             SelectOption(label="Imagem da Moeda", value="coin_image", emoji="🪙"),
             SelectOption(label="Mensagem de Level Up", value="level_up", emoji="🎉"),
             SelectOption(label="Recompensa Diária (/daily)", value="daily_reward", emoji="🎁"),
-            SelectOption(label="Sistema de Convites", value="invites_config", emoji="📨")
+            SelectOption(label="Sistema de Convites", value="invites_config", emoji="📨"),
+            SelectOption(label="Títulos/Patentes", value="titles_config", emoji="🏷️")
         ]
         super().__init__(placeholder="Escolha uma opção de gamificação...", options=options)
     async def callback(self, i: Interaction):
@@ -494,6 +808,11 @@ class GamificacaoSelect(ui.Select):
         if choice == "invites_config":
             invite_config = await get_specific_config(self.bot, i.guild.id, "invites")
             await i.response.send_modal(InvitesConfigModal(self.bot, invite_config))
+            return
+        if choice == "titles_config":
+            view = TitlesSettingsView(self.bot, config)
+            embed = Embed(title="🏷️ Títulos/Patentes", description="Gerencie os títulos dos usuários no perfil.", color=discord.Color.blurple())
+            await i.response.send_message(embed=embed, view=view, ephemeral=True)
             return
         if modal_class := modals.get(choice):
             await i.response.send_modal(modal_class(self.bot, config=config))
