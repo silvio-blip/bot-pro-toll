@@ -104,6 +104,26 @@ class XpConfigModal(ui.Modal, title="Configurações Gerais de XP"):
         else:
             await i.followup.send("Configurações salvas.", ephemeral=True)
 
+
+class CoinImageModal(ui.Modal, title="Imagem da Moeda"):
+    def __init__(self, bot, config: dict):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.config = config
+        self.add_item(ui.TextInput(label="URL da Imagem da Moeda", default=config.get("coin_image_url", ""), placeholder="https://exemplo.com/moeda.png", style=TextStyle.long))
+    async def on_submit(self, i: Interaction):
+        await i.response.defer(ephemeral=True)
+        guild_id = i.guild.id
+        
+        if hasattr(self.bot, 'get_and_update_server_settings'):
+            def update_config(settings: dict):
+                settings.setdefault('gamification_xp', {})['coin_image_url'] = self.children[0].value.strip()
+            
+            success = await self.bot.get_and_update_server_settings(guild_id, update_config)
+            await i.followup.send("Imagem da moeda salva!" if success else "Erro ao salvar!", ephemeral=True)
+        else:
+            await i.followup.send("Imagem da moeda salva.", ephemeral=True)
+
 class LevelUpConfigModal(ui.Modal, title="Configuração de Níveis"):
     def __init__(self, bot, config: dict):
         super().__init__(timeout=None)
@@ -456,7 +476,8 @@ class GamificacaoSelect(ui.Select):
     def __init__(self, bot):
         self.bot = bot
         options = [
-            SelectOption(label="Configurações de XP", value="xp_config", emoji="⚙️"), 
+            SelectOption(label="Configurações de XP", value="xp_config", emoji="💰"),
+            SelectOption(label="Imagem da Moeda", value="coin_image", emoji="🪙"),
             SelectOption(label="Mensagem de Level Up", value="level_up", emoji="🎉"),
             SelectOption(label="Recompensa Diária (/daily)", value="daily_reward", emoji="🎁"),
             SelectOption(label="Sistema de Convites", value="invites_config", emoji="📨")
@@ -465,7 +486,7 @@ class GamificacaoSelect(ui.Select):
     async def callback(self, i: Interaction):
         choice = self.values[0]
         config = await get_specific_config(self.bot, i.guild.id, 'gamification_xp')
-        modals = {"xp_config": XpConfigModal, "level_up": LevelUpConfigModal, "daily_reward": DailyRewardConfigModal}
+        modals = {"xp_config": XpConfigModal, "coin_image": CoinImageModal, "level_up": LevelUpConfigModal, "daily_reward": DailyRewardConfigModal}
         if choice == "invites_config":
             invite_config = await get_specific_config(self.bot, i.guild.id, "invites")
             await i.response.send_modal(InvitesConfigModal(self.bot, invite_config))

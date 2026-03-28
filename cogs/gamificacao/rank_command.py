@@ -121,7 +121,8 @@ async def create_rank_card(
     inventory_items: list = None,
     equipped_background: str = None,
     equipped_avatar: str = None,
-    profile_bio: str = ""
+    profile_bio: str = "",
+    coin_image_url: str = None
 ) -> BytesIO:
     """Gera uma imagem de cartão de perfil moderno e bonito"""
     
@@ -299,7 +300,23 @@ async def create_rank_card(
     stats_container3 = create_stats_card(stat_card_width_large, 100 * scale_factor, 10 * scale_factor)
     card.paste(stats_container3, (stats_x3, stats_y), stats_container3)
     draw.text((stats_x3 + 12 * scale_factor, stats_y + 10 * scale_factor), f"{points_name.upper()}", font=stat_label_font, fill=(99, 102, 241))
-    draw.text((stats_x3 + 12 * scale_factor, stats_y + 45 * scale_factor), f"{total_xp:,}", font=stat_value_font, fill=(255, 215, 0))
+    
+    # Renderizar imagem da moeda se URL existir
+    coin_offset = 0
+    if coin_image_url:
+        try:
+            coin_response = requests.get(coin_image_url, timeout=10)
+            coin_img = Image.open(BytesIO(coin_response.content)).convert("RGBA")
+            coin_size = 35 * scale_factor
+            coin_img = coin_img.resize((coin_size, coin_size), Image.Resampling.LANCZOS)
+            coin_x = stats_x3 + 12 * scale_factor
+            coin_y = stats_y + 45 * scale_factor
+            card.paste(coin_img, (coin_x, coin_y), coin_img)
+            coin_offset = coin_size + 5 * scale_factor
+        except Exception as e:
+            logging.error(f"Erro ao carregar imagem da moeda: {e}")
+    
+    draw.text((stats_x3 + 12 * scale_factor + coin_offset, stats_y + 45 * scale_factor), f"{total_xp:,}", font=stat_value_font, fill=(255, 215, 0))
     
     # ========== BARRA DE XP ==========
     bar_x = 40 * scale_factor
@@ -496,6 +513,7 @@ class ProfileView(ui.View):
                 gamification_settings = settings_response.data[0].get('settings', {}).get('gamification_xp', {})
             
             points_name = gamification_settings.get('points_name', 'XP')
+            coin_image_url = gamification_settings.get('coin_image_url')
             xp_per_level_base = int(gamification_settings.get('xp_per_level_base', 300)) or 300
             
             total_xp = profile_data.get('xp', 0)
@@ -543,7 +561,8 @@ class ProfileView(ui.View):
                 inventory_items=inventory_items,
                 equipped_background=background_url,
                 equipped_avatar=avatar_url,
-                profile_bio=profile_bio
+                profile_bio=profile_bio,
+                coin_image_url=coin_image_url
             )
             
             return image_buffer
@@ -560,6 +579,7 @@ class ProfileView(ui.View):
                 gamification_settings = settings_response.data[0].get('settings', {}).get('gamification_xp', {})
             
             points_name = gamification_settings.get('points_name', 'XP')
+            coin_image_url = gamification_settings.get('coin_image_url')
             xp_per_level_base = int(gamification_settings.get('xp_per_level_base', 300)) or 300
             
             profile_response = self.bot.supabase_client.table("gamification_profiles").select(
@@ -625,7 +645,8 @@ class ProfileView(ui.View):
                 inventory_items=inventory_items,
                 equipped_background=bg_url,
                 equipped_avatar=avatar_url,
-                profile_bio=profile_bio
+                profile_bio=profile_bio,
+                coin_image_url=coin_image_url
             )
             
             return image_buffer
@@ -891,6 +912,7 @@ class PerfilCommand(commands.Cog):
                 gamification_settings = settings_response.data[0].get('settings', {}).get('gamification_xp', {})
             
             points_name = gamification_settings.get('points_name', 'XP')
+            coin_image_url = gamification_settings.get('coin_image_url')
             xp_per_level_base = int(gamification_settings.get('xp_per_level_base', 300)) or 300
             
             profile_response = self.bot.supabase_client.table("gamification_profiles").select(
@@ -966,7 +988,8 @@ class PerfilCommand(commands.Cog):
                 inventory_items=inventory_items,
                 equipped_background=background_url,
                 equipped_avatar=avatar_url,
-                profile_bio=profile_bio
+                profile_bio=profile_bio,
+                coin_image_url=coin_image_url
             )
             
             embed = Embed(
