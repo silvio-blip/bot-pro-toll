@@ -307,10 +307,31 @@ async def create_rank_card(
         
         draw.text((bio_x, bio_y), "Sobre mim...", font=stat_label_font, fill=(59, 130, 246))
         
-        max_chars_per_line = 40
-        bio_lines = []
-        for i in range(0, len(profile_bio), max_chars_per_line):
-            bio_lines.append(profile_bio[i:i + max_chars_per_line])
+        max_chars_per_line = 35
+        
+        def quebra_linha_inteligente(texto, limite):
+            palavras = texto.split()
+            linhas = []
+            linha_atual = ""
+            for palavra in palavras:
+                if len(linha_atual) + len(palavra) + 1 <= limite:
+                    linha_atual += (" " if linha_atual else "") + palavra
+                else:
+                    if linha_atual:
+                        linhas.append(linha_atual)
+                    if len(palavra) > limite:
+                        parte1 = palavra[:limite]
+                        parte2 = palavra[limite:]
+                        linha_atual = parte1
+                        linhas.append(linha_atual)
+                        linha_atual = parte2
+                    else:
+                        linha_atual = palavra
+            if linha_atual:
+                linhas.append(linha_atual)
+            return linhas
+        
+        bio_lines = quebra_linha_inteligente(profile_bio, max_chars_per_line)
         
         for i, line in enumerate(bio_lines):
             draw.text((bio_x + 5 * scale_factor, bio_y + 35 * scale_factor + (i * 25 * scale_factor)), line, font=stat_label_font, fill=(180, 180, 180))
@@ -434,18 +455,21 @@ xp_for_level_base = 300
 class ProfileView(ui.View):
     """View interativa para o perfil com seleção de categoria"""
     
-    def __init__(self, bot: commands.Bot, target_user, guild_id: int, points_name: str, message=None, is_private: bool = False):
+    def __init__(self, bot: commands.Bot, target_user, guild_id: int, points_name: str, message=None, is_private: bool = None):
         super().__init__(timeout=180)
         self.bot = bot
         self.target_user = target_user
         self.guild_id = guild_id
         self.points_name = points_name
         self.message = message
-        self.is_private = is_private
         self.fundos = []
         self.avatares = []
         self.current_fundo_index = 0
         self.current_avatar_index = 0
+        
+        profile_resp = bot.supabase_client.table("gamification_profiles").select("is_private").eq("user_id", target_user.id).eq("guild_id", guild_id).execute()
+        self.is_private = profile_resp.data[0].get('is_private', False) if profile_resp.data else False
+        
         self._load_items()
         
         btn_fundo = ui.Button(label="🎨 Fundo", style=discord.ButtonStyle.secondary, custom_id="selecionar_fundo", row=0)
@@ -453,7 +477,7 @@ class ProfileView(ui.View):
         btn_bio = ui.Button(label="📝 Bio", style=discord.ButtonStyle.secondary, custom_id="editar_bio", row=0)
         
         btn_privado = ui.Button(
-            label="🔓 Público" if is_private else "🔒 Privado",
+            label="🔓 Público" if self.is_private else "🔒 Privado",
             style=discord.ButtonStyle.secondary,
             custom_id="alternar_privado",
             row=0
@@ -748,11 +772,12 @@ class ProfileView(ui.View):
             
             for child in self.children:
                 if isinstance(child, ui.Button) and child.custom_id == "alternar_privado":
-                    child.label = "🔓 Público" if new_state else "🔒 Privado"
+                    child.label = "🔓 Público" if current_state else "🔒 Privado"
                     break
             
             status = "privado" if new_state else "público"
-            await interaction.response.send_message(f"Perfil alterado para **{status}**!", ephemeral=True)
+            await interaction.response.edit_message(view=self)
+            await interaction.followup.send(f"Perfil alterado para **{status}**!", ephemeral=True)
         except Exception as e:
             logging.error(f"Erro ao alternar privacidade: {e}")
             await interaction.response.send_message("Erro ao alterar privacidade.", ephemeral=True)
