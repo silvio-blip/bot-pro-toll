@@ -110,19 +110,23 @@ class CoinImageModal(ui.Modal, title="Imagem da Moeda"):
         super().__init__(timeout=None)
         self.bot = bot
         self.config = config
-        self.add_item(ui.TextInput(label="URL da Imagem da Moeda", default=config.get("coin_image_url", ""), placeholder="https://exemplo.com/moeda.png", style=TextStyle.long))
+        self.add_item(ui.TextInput(label="URL Imagem (deixe vazio para padrão)", default=config.get("coin_image_url", ""), placeholder="https://exemplo.com/moeda.png", style=TextStyle.long, required=False))
     async def on_submit(self, i: Interaction):
         await i.response.defer(ephemeral=True)
         guild_id = i.guild.id
+        coin_url = self.children[0].value.strip()
         
         if hasattr(self.bot, 'get_and_update_server_settings'):
             def update_config(settings: dict):
-                settings.setdefault('gamification_xp', {})['coin_image_url'] = self.children[0].value.strip()
+                if coin_url:
+                    settings.setdefault('gamification_xp', {})['coin_image_url'] = coin_url
+                else:
+                    settings.setdefault('gamification_xp', {}).pop('coin_image_url', None)
             
             success = await self.bot.get_and_update_server_settings(guild_id, update_config)
-            await i.followup.send("Imagem da moeda salva!" if success else "Erro ao salvar!", ephemeral=True)
+            await i.followup.send("Imagem da moeda configurada!" if success else "Erro ao salvar!", ephemeral=True)
         else:
-            await i.followup.send("Imagem da moeda salva.", ephemeral=True)
+            await i.followup.send("Imagem da moeda configurada.", ephemeral=True)
 
 class LevelUpConfigModal(ui.Modal, title="Configuração de Níveis"):
     def __init__(self, bot, config: dict):

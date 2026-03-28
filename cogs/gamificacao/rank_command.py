@@ -299,22 +299,24 @@ async def create_rank_card(
     stat_card_width_large = 280 * scale_factor
     stats_container3 = create_stats_card(stat_card_width_large, 100 * scale_factor, 10 * scale_factor)
     card.paste(stats_container3, (stats_x3, stats_y), stats_container3)
-    draw.text((stats_x3 + 12 * scale_factor, stats_y + 10 * scale_factor), f"{points_name.upper()}", font=stat_label_font, fill=(99, 102, 241))
+    draw.text((stats_x3 + 12 * scale_factor, stats_y + 10 * scale_factor), f"{points_name}", font=stat_label_font, fill=(99, 102, 241))
     
-    # Renderizar imagem da moeda se URL existir
+    # Renderizar imagem da moeda (padrão ou customizada)
     coin_offset = 0
-    if coin_image_url:
-        try:
-            coin_response = requests.get(coin_image_url, timeout=10)
-            coin_img = Image.open(BytesIO(coin_response.content)).convert("RGBA")
-            coin_size = 35 * scale_factor
-            coin_img = coin_img.resize((coin_size, coin_size), Image.Resampling.LANCZOS)
-            coin_x = stats_x3 + 12 * scale_factor
-            coin_y = stats_y + 45 * scale_factor
-            card.paste(coin_img, (coin_x, coin_y), coin_img)
-            coin_offset = coin_size + 5 * scale_factor
-        except Exception as e:
-            logging.error(f"Erro ao carregar imagem da moeda: {e}")
+    default_coin_url = "https://media.discordapp.net/attachments/1487374232886448248/1487386517985951814/correto_1446515346201776283_1774.webp?ex=69c8f424&is=69c7a2a4&hm=3890867b1d1733aacd3ec8474964da72e89de91a67f408c3cf5d6f2d93c62aaa&=&format=webp"
+    coin_url = coin_image_url if coin_image_url else default_coin_url
+    
+    try:
+        coin_response = requests.get(coin_url, timeout=10)
+        coin_img = Image.open(BytesIO(coin_response.content)).convert("RGBA")
+        coin_size = 35 * scale_factor
+        coin_img = coin_img.resize((coin_size, coin_size), Image.Resampling.LANCZOS)
+        coin_x = stats_x3 + 12 * scale_factor
+        coin_y = stats_y + 45 * scale_factor
+        card.paste(coin_img, (coin_x, coin_y), coin_img)
+        coin_offset = coin_size + 5 * scale_factor
+    except Exception as e:
+        logging.error(f"Erro ao carregar imagem da moeda: {e}")
     
     draw.text((stats_x3 + 12 * scale_factor + coin_offset, stats_y + 45 * scale_factor), f"{total_xp:,}", font=stat_value_font, fill=(255, 215, 0))
     
