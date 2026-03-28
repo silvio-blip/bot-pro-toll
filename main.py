@@ -80,7 +80,7 @@ async def check_server_registered(interaction: discord.Interaction) -> bool:
         return len(response.data) > 0
     except Exception:
         return False
-
+ 
 async def registered_server_check(interaction: discord.Interaction) -> bool:
     command_name = interaction.command.name if interaction.command else ""
     if command_name in REGISTERED_EXCEPTIONS:
