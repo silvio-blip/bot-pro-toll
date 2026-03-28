@@ -1,203 +1,11 @@
 import discord
 from discord.ext import commands
-from discord import app_commands, Interaction, File, ui, Embed, ButtonStyle, TextStyle
+from discord import app_commands, Interaction, File, ui, Embed
 import logging
-from PIL import Image, ImageDraw, ImageFont, ImageSequence
+from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
 from datetime import datetime
-
-
-def is_gif_url(url: str) -> bool:
-    """Detecta se a URL é um arquivo GIF"""
-    if not url:
-        return False
-    return url.lower().endswith('.gif')
-
-
-def create_animated_profile_gif(
-    user_avatar_url: str,
-    user_name: str,
-    current_level: int,
-    current_xp_in_level: int,
-    xp_for_level_up: int,
-    points_name: str,
-    total_xp: int = 0,
-    background_url: str = None,
-    custom_avatar_url: str = None,
-    message_count: int = 0,
-    days_in_server: int = 0,
-    rank_position: int = 0,
-    total_members: int = 0,
-    equipped_background: str = None,
-    equipped_avatar: str = None,
-    profile_bio: str = "",
-    coin_image_url: str = None
-) -> BytesIO:
-    """Gera um GIF animado usando o GIF original como fundo"""
-    
-    scale_factor = 2
-    card_width = 1000 * scale_factor
-    card_height = 700 * scale_factor
-    
-    if equipped_background and is_gif_url(equipped_background):
-        try:
-            response = requests.get(equipped_background, timeout=10)
-            gif = Image.open(BytesIO(response.content))
-            
-            frames = []
-            for frame in ImageSequence.Iterator(gif):
-                frame = frame.convert("RGBA")
-                frame = frame.resize((card_width, card_height), Image.Resampling.LANCZOS)
-                overlay = Image.new("RGBA", (card_width, card_height), (0, 0, 0, 140))
-                frame = Image.alpha_composite(frame, overlay)
-                frames.append(frame)
-            
-            if not frames:
-                frames = [create_modern_background(card_width, card_height)]
-        except Exception as e:
-            logging.error(f"Erro ao processar GIF: {e}")
-            frames = [create_modern_background(card_width, card_height)]
-    else:
-        frames = [create_modern_background(card_width, card_height)]
-    
-    for i, card in enumerate(frames):
-        draw = ImageDraw.Draw(card)
-        
-        try:
-            name_font = ImageFont.truetype("assets/fonts/Poppins-Bold.ttf", 56 * scale_factor)
-            level_font = ImageFont.truetype("assets/fonts/Poppins-Bold.ttf", 32 * scale_factor)
-            stat_label_font = ImageFont.truetype("assets/fonts/Poppins-Regular.ttf", 22 * scale_factor)
-            stat_value_font = ImageFont.truetype("assets/fonts/Poppins-Bold.ttf", 26 * scale_factor)
-            small_font = ImageFont.truetype("assets/fonts/Poppins-Regular.ttf", 22 * scale_factor)
-            tiny_font = ImageFont.truetype("assets/fonts/Poppins-Regular.ttf", 18 * scale_factor)
-        except:
-            name_font = ImageFont.load_default()
-            level_font = name_font
-            stat_label_font = name_font
-            stat_value_font = name_font
-            small_font = name_font
-            tiny_font = name_font
-        
-        avatar_url_to_use = custom_avatar_url or user_avatar_url
-        try:
-            resp = requests.get(avatar_url_to_use, timeout=5)
-            avatar = Image.open(BytesIO(resp.content)).convert("RGBA").resize((130 * scale_factor, 130 * scale_factor))
-        except:
-            resp = requests.get(user_avatar_url, timeout=5)
-            avatar = Image.open(BytesIO(resp.content)).convert("RGBA").resize((130 * scale_factor, 130 * scale_factor))
-        
-        avatar_circular = Image.new("RGBA", (130 * scale_factor, 130 * scale_factor), (0, 0, 0, 0))
-        avatar_mask = Image.new("L", (130 * scale_factor, 130 * scale_factor), 0)
-        draw_mask = ImageDraw.Draw(avatar_mask)
-        draw_mask.ellipse((0, 0, 130 * scale_factor, 130 * scale_factor), fill=255)
-        avatar_circular.paste(avatar, (0, 0), avatar)
-        avatar_circular.putalpha(avatar_mask)
-        
-        avatar_frame = Image.new("RGBA", (150 * scale_factor, 150 * scale_factor), (0, 0, 0, 0))
-        frame_colors = [(139, 92, 246), (99, 102, 241), (59, 130, 246)]
-        for j in range(9):
-            frame_draw = ImageDraw.Draw(avatar_frame)
-            frame_draw.rounded_rectangle((j * scale_factor, j * scale_factor, 150 * scale_factor - j * scale_factor, 150 * scale_factor - j * scale_factor), radius=75 * scale_factor, outline=(*frame_colors[j // 3], 200), width=2 * scale_factor)
-        
-        avatar_frame.paste(avatar_circular, (10 * scale_factor, 10 * scale_factor), avatar_circular)
-        card.paste(avatar_frame, (40 * scale_factor, 40 * scale_factor), avatar_frame)
-        
-        display_name = user_name[:14] + "..." if len(user_name) > 14 else user_name
-        draw.text((200 * scale_factor, 50 * scale_factor), display_name, font=name_font, fill=(255, 255, 255))
-        draw.text((210 * scale_factor, 105 * scale_factor), f"NÍVEL {current_level}", font=level_font, fill=(255, 215, 0))
-        
-        level_badge = ""
-        if current_level >= 100:
-            level_badge = "👑 Lendário"
-        elif current_level >= 50:
-            level_badge = "👑 Mestre"
-        elif current_level >= 25:
-            level_badge = "🔥 Elite"
-        elif current_level >= 10:
-            level_badge = "⭐ Avançado"
-        elif current_level >= 5:
-            level_badge = "✨ Iniciante"
-        else:
-            level_badge = "🌱 Novato"
-        
-        draw.text((210 * scale_factor, 145 * scale_factor), level_badge, font=stat_value_font, fill=(255, 215, 0))
-        
-        if profile_bio:
-            draw.text((580 * scale_factor, 55 * scale_factor), "Sobre mim...", font=stat_label_font, fill=(139, 92, 246))
-            for j, line in enumerate([profile_bio[i:i+40] for i in range(0, min(len(profile_bio), 120), 40)][:3]):
-                draw.text((580 * scale_factor, 80 * scale_factor + j * 22 * scale_factor), line, font=tiny_font, fill=(255, 255, 255))
-        
-        stats_container = create_stats_card(140 * scale_factor, 100 * scale_factor, 10 * scale_factor)
-        card.paste(stats_container, (40 * scale_factor, 280 * scale_factor), stats_container)
-        draw.text((52 * scale_factor, 290 * scale_factor), "RANK", font=stat_label_font, fill=(139, 92, 246))
-        draw.text((52 * scale_factor, 325 * scale_factor), f"#{rank_position}/{total_members}", font=stat_value_font, fill=(255, 255, 255))
-        
-        stats_container2 = create_stats_card(140 * scale_factor, 100 * scale_factor, 10 * scale_factor)
-        card.paste(stats_container2, (192 * scale_factor, 280 * scale_factor), stats_container2)
-        draw.text((204 * scale_factor, 290 * scale_factor), "MENSAGENS", font=stat_label_font, fill=(59, 130, 246))
-        draw.text((204 * scale_factor, 325 * scale_factor), f"{message_count:,}", font=stat_value_font, fill=(255, 255, 255))
-        
-        stats_container3 = create_stats_card(280 * scale_factor, 100 * scale_factor, 10 * scale_factor)
-        card.paste(stats_container3, (344 * scale_factor, 280 * scale_factor), stats_container3)
-        draw.text((356 * scale_factor, 290 * scale_factor), f"{points_name.upper()}", font=stat_label_font, fill=(99, 102, 241))
-        
-        coin_offset = 0
-        default_coin_url = "https://media.discordapp.net/attachments/1487374232886448248/1487386517985951814/correto_1446515346201776283_1774.webp?ex=69c8f424&is=69c7a2a4&hm=3890867b1d1733aacd3ec8474964da72e89de91a67f408c3cf5d6f2d93c62aaa&=&format=webp"
-        coin_url = coin_image_url if coin_image_url else default_coin_url
-        
-        try:
-            coin_response = requests.get(coin_url, timeout=5)
-            coin_img = Image.open(BytesIO(coin_response.content)).convert("RGBA")
-            coin_img = coin_img.resize((35 * scale_factor, 35 * scale_factor), Image.Resampling.LANCZOS)
-            card.paste(coin_img, (356 * scale_factor, 365 * scale_factor), coin_img)
-            coin_offset = 40 * scale_factor
-        except:
-            pass
-        
-        draw.text((356 * scale_factor + coin_offset, 325 * scale_factor), f"{total_xp:,}", font=stat_value_font, fill=(255, 215, 0))
-        
-        bg_bar = Image.new("RGBA", (920 * scale_factor, 25 * scale_factor), (0, 0, 0, 100))
-        draw_bar = ImageDraw.Draw(bg_bar)
-        draw_bar.rounded_rectangle((0, 0, 920 * scale_factor, 25 * scale_factor), radius=12 * scale_factor, fill=(0, 0, 0, 100))
-        card.paste(bg_bar, (40 * scale_factor, 420 * scale_factor), bg_bar)
-        
-        if xp_for_level_up > 0:
-            xp_ratio = current_xp_in_level / xp_for_level_up
-            xp_bar_width = int(920 * scale_factor * min(xp_ratio, 1))
-            if xp_bar_width > 0:
-                xp_bar = Image.new("RGBA", (xp_bar_width, 25 * scale_factor), (0, 0, 0, 0))
-                draw_xp = ImageDraw.Draw(xp_bar)
-                gradient_colors = [(139, 92, 246), (99, 102, 241), (59, 130, 246)]
-                for px in range(xp_bar_width):
-                    ratio = px / xp_bar_width
-                    idx = ratio * 2
-                    j = int(idx)
-                    f = idx - j
-                    r = int(gradient_colors[j][0] * (1 - f) + gradient_colors[min(j + 1, 2)][0] * f)
-                    g = int(gradient_colors[j][1] * (1 - f) + gradient_colors[min(j + 1, 2)][1] * f)
-                    b = int(gradient_colors[j][2] * (1 - f) + gradient_colors[min(j + 1, 2)][2] * f)
-                    draw_xp.line([(px, 0), (px, 25 * scale_factor)], fill=(r, g, b, 255))
-                xp_bar_mask = create_rounded_mask((xp_bar_width, 25 * scale_factor), 12 * scale_factor)
-                xp_bar.putalpha(xp_bar_mask)
-                card.paste(xp_bar, (40 * scale_factor, 420 * scale_factor), xp_bar)
-        
-        draw.text((50 * scale_factor, 422 * scale_factor), f"{current_xp_in_level}/{xp_for_level_up} {points_name}", font=tiny_font, fill=(255, 255, 255))
-        draw.text((40 * scale_factor, 480 * scale_factor), f"📅 {days_in_server} dias no servidor", font=small_font, fill=(200, 200, 200))
-        
-        mask = create_rounded_mask((card_width, card_height), 50 * scale_factor)
-        card.putalpha(mask)
-        
-        border_card = Image.new("RGBA", (card_width + 16 * scale_factor, card_height + 16 * scale_factor), (0, 0, 0, 0))
-        draw_border = ImageDraw.Draw(border_card)
-        draw_border.rounded_rectangle((0, 0, card_width + 16 * scale_factor, card_height + 16 * scale_factor), radius=58 * scale_factor, outline=(139, 92, 246, 100), width=2 * scale_factor)
-        border_card.paste(card, (8 * scale_factor, 8 * scale_factor))
-        frames[i] = border_card
-    
-    output = BytesIO()
-    frames[0].save(output, format='GIF', save_all=True, append_images=frames[1:], duration=150, loop=0)
-    output.seek(0)
-    return output
 
 
 def create_modern_background(width: int, height: int) -> Image.Image:
@@ -312,9 +120,7 @@ async def create_rank_card(
     total_members: int = 0,
     inventory_items: list = None,
     equipped_background: str = None,
-    equipped_avatar: str = None,
-    profile_bio: str = "",
-    coin_image_url: str = None
+    equipped_avatar: str = None
 ) -> BytesIO:
     """Gera uma imagem de cartão de perfil moderno e bonito"""
     
@@ -451,22 +257,6 @@ async def create_rank_card(
     
     draw.text((210 * scale_factor, 145 * scale_factor), level_badge, font=stat_value_font, fill=level_color)
     
-    # ========== CAMPO BIO (canto superior direito) ==========
-    if profile_bio:
-        bio_box_x = 580 * scale_factor
-        bio_box_y = 55 * scale_factor
-        
-        draw.text((bio_box_x, bio_box_y), "Sobre mim...", font=stat_label_font, fill=(139, 92, 246))
-        
-        bio_text_y = bio_box_y + 25 * scale_factor
-        max_chars = 40
-        bio_lines = []
-        for i in range(0, len(profile_bio), max_chars):
-            bio_lines.append(profile_bio[i:i + max_chars])
-        
-        for i, line in enumerate(bio_lines[:3]):
-            draw.text((bio_box_x, bio_text_y + i * 22 * scale_factor), line, font=tiny_font, fill=(255, 255, 255))
-    
     # ========== CARDS DE ESTATÍSTICAS (abaixo da barra de XP) ==========
     card_spacing = 12 * scale_factor
     stat_card_width = 140 * scale_factor
@@ -491,26 +281,8 @@ async def create_rank_card(
     stat_card_width_large = 280 * scale_factor
     stats_container3 = create_stats_card(stat_card_width_large, 100 * scale_factor, 10 * scale_factor)
     card.paste(stats_container3, (stats_x3, stats_y), stats_container3)
-    draw.text((stats_x3 + 12 * scale_factor, stats_y + 10 * scale_factor), f"{points_name.upper()}", font=stat_label_font, fill=(99, 102, 241))
-    
-    # Renderizar imagem da moeda (padrão ou customizada)
-    coin_offset = 0
-    default_coin_url = "https://media.discordapp.net/attachments/1487374232886448248/1487386517985951814/correto_1446515346201776283_1774.webp?ex=69c8f424&is=69c7a2a4&hm=3890867b1d1733aacd3ec8474964da72e89de91a67f408c3cf5d6f2d93c62aaa&=&format=webp"
-    coin_url = coin_image_url if coin_image_url else default_coin_url
-    
-    try:
-        coin_response = requests.get(coin_url, timeout=10)
-        coin_img = Image.open(BytesIO(coin_response.content)).convert("RGBA")
-        coin_size = 35 * scale_factor
-        coin_img = coin_img.resize((coin_size, coin_size), Image.Resampling.LANCZOS)
-        coin_x = stats_x3 + 12 * scale_factor
-        coin_y = stats_y + 45 * scale_factor
-        card.paste(coin_img, (coin_x, coin_y), coin_img)
-        coin_offset = coin_size + 5 * scale_factor
-    except Exception as e:
-        logging.error(f"Erro ao carregar imagem da moeda: {e}")
-    
-    draw.text((stats_x3 + 12 * scale_factor + coin_offset, stats_y + 45 * scale_factor), f"{total_xp:,}", font=stat_value_font, fill=(255, 215, 0))
+    draw.text((stats_x3 + 12 * scale_factor, stats_y + 10 * scale_factor), f"💎 {points_name.upper()}", font=stat_label_font, fill=(99, 102, 241))
+    draw.text((stats_x3 + 12 * scale_factor, stats_y + 45 * scale_factor), f"{total_xp:,}", font=stat_value_font, fill=(255, 215, 0))
     
     # ========== BARRA DE XP ==========
     bar_x = 40 * scale_factor
@@ -806,52 +578,24 @@ class ProfileView(ui.View):
             inventory_response = self.bot.supabase_client.table("user_inventories").select("*").eq("guild_id", self.guild_id).eq("user_id", target_user.id).execute()
             inventory_items = inventory_response.data if inventory_response.data else []
             
-            coin_image_url = gamification_settings.get('coin_image_url')
-            profile_bio = profile_data.get('profile_bio', '')
-            
-            is_animated = is_gif_url(bg_url) or is_gif_url(avatar_url)
-            
-            if is_animated:
-                image_buffer = create_animated_profile_gif(
-                    user_avatar_url=target_user.display_avatar.url,
-                    custom_avatar_url=avatar_url,
-                    user_name=target_user.display_name,
-                    current_level=calculated_level,
-                    current_xp_in_level=xp_in_this_level,
-                    xp_for_level_up=total_xp_for_this_level_up,
-                    points_name=points_name,
-                    total_xp=total_xp,
-                    background_url=bg_url,
-                    message_count=message_count,
-                    days_in_server=days_in_server,
-                    rank_position=rank_position,
-                    total_members=total_members,
-                    equipped_background=bg_url,
-                    equipped_avatar=avatar_url,
-                    profile_bio=profile_bio,
-                    coin_image_url=coin_image_url
-                )
-            else:
-                image_buffer = await create_rank_card(
-                    user_avatar_url=target_user.display_avatar.url,
-                    custom_avatar_url=avatar_url,
-                    user_name=target_user.display_name,
-                    current_level=calculated_level,
-                    current_xp_in_level=xp_in_this_level,
-                    xp_for_level_up=total_xp_for_this_level_up,
-                    points_name=points_name,
-                    total_xp=total_xp,
-                    background_url=bg_url,
-                    message_count=message_count,
-                    days_in_server=days_in_server,
-                    rank_position=rank_position,
-                    total_members=total_members,
-                    inventory_items=inventory_items,
-                    equipped_background=bg_url,
-                    equipped_avatar=avatar_url,
-                    profile_bio=profile_bio,
-                    coin_image_url=coin_image_url
-                )
+            image_buffer = await create_rank_card(
+                user_avatar_url=target_user.display_avatar.url,
+                custom_avatar_url=avatar_url,
+                user_name=target_user.display_name,
+                current_level=calculated_level,
+                current_xp_in_level=xp_in_this_level,
+                xp_for_level_up=total_xp_for_this_level_up,
+                points_name=points_name,
+                total_xp=total_xp,
+                background_url=bg_url,
+                message_count=message_count,
+                days_in_server=days_in_server,
+                rank_position=rank_position,
+                total_members=total_members,
+                inventory_items=inventory_items,
+                equipped_background=bg_url,
+                equipped_avatar=avatar_url
+            )
             
             return image_buffer
         except Exception as e:
@@ -874,11 +618,9 @@ class ProfileView(ui.View):
         preview_buffer = await self.get_preview(self.target_user, preview_background_url=item_url)
         
         if preview_buffer:
-            is_anim = is_gif_url(item_url)
-            filename = "profile_card.gif" if is_anim else "profile_card.png"
             embed = Embed(title=f"📊 Perfil de {self.target_user.display_name}", color=discord.Color.blurple())
-            embed.set_image(url=f"attachment://{filename}")
-            await interaction.response.edit_message(embed=embed, attachments=[File(preview_buffer, filename=filename)], view=view)
+            embed.set_image(url="attachment://profile_card.png")
+            await interaction.response.edit_message(embed=embed, attachments=[File(preview_buffer, filename="profile_card.png")], view=view)
         else:
             view = ItemNavigatorView(self.bot, self.target_user, self.guild_id, self.fundos, "fundo_perfil", self)
             item_name = item.get('item_name', 'Fundo')
@@ -900,112 +642,14 @@ class ProfileView(ui.View):
         
         if preview_buffer:
             view = ItemNavigatorView(self.bot, self.target_user, self.guild_id, self.avatares, "avatar_perfil", self)
-            is_anim = is_gif_url(item_url)
-            filename = "profile_card.gif" if is_anim else "profile_card.png"
             embed = Embed(title=f"📊 Perfil de {self.target_user.display_name}", color=discord.Color.blurple())
-            embed.set_image(url=f"attachment://{filename}")
-            await interaction.response.edit_message(embed=embed, attachments=[File(preview_buffer, filename=filename)], view=view)
+            embed.set_image(url="attachment://profile_card.png")
+            await interaction.response.edit_message(embed=embed, attachments=[File(preview_buffer, filename="profile_card.png")], view=view)
         else:
             view = ItemNavigatorView(self.bot, self.target_user, self.guild_id, self.avatares, "avatar_perfil", self)
             item_name = item.get('item_name', 'Avatar')
             embed = Embed(title="👤 Selecione um Avatar", description=f"**{item_name}**", color=discord.Color.blurple())
             await interaction.response.edit_message(embed=embed, view=view)
-    
-    @ui.button(label="📝 Bio", style=discord.ButtonStyle.secondary, custom_id="editar_bio", row=0)
-    async def editar_bio(self, interaction: Interaction, button: ui.Button):
-        await interaction.response.send_modal(BioModal(self.bot, self.target_user, self.guild_id, self.points_name))
-    
-    @ui.button(label="🔒 Privado", style=discord.ButtonStyle.danger, custom_id="alternar_privado", row=0)
-    async def alternar_privado(self, interaction: Interaction, button: ui.Button):
-        try:
-            profile_response = self.bot.supabase_client.table("gamification_profiles").select("is_private").eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
-            current_state = profile_response.data[0].get('is_private', False) if profile_response.data else False
-            
-            new_state = not current_state
-            
-            self.bot.supabase_client.table("gamification_profiles").update({
-                "is_private": new_state
-            }).eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
-            
-            status = "privado" if new_state else "público"
-            await interaction.response.send_message(f"Perfil alterado para **{status}**!", ephemeral=True)
-        except Exception as e:
-            logging.error(f"Erro ao alternar privacidade: {e}")
-            await interaction.response.send_message("Erro ao alterar privacidade.", ephemeral=True)
-
-
-class BioModal(ui.Modal):
-    def __init__(self, bot: commands.Bot, target_user, guild_id: int, points_name: str):
-        super().__init__(title="Editar Bio")
-        self.bot = bot
-        self.target_user = target_user
-        self.guild_id = guild_id
-        self.points_name = points_name
-        
-        profile_response = bot.supabase_client.table("gamification_profiles").select("profile_bio").eq("user_id", target_user.id).eq("guild_id", guild_id).execute()
-        current_bio = profile_response.data[0].get('profile_bio', '') if profile_response.data else ''
-        
-        self.bio = ui.TextInput(label="Sua Bio", style=TextStyle.long, default=current_bio, placeholder="Escreva algo sobre você...", max_length=100, required=False)
-        self.add_item(self.bio)
-    
-    async def on_submit(self, interaction: Interaction):
-        try:
-            self.bot.supabase_client.table("gamification_profiles").update({
-                "profile_bio": self.bio.value
-            }).eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
-            
-            profile_response = self.bot.supabase_client.table("gamification_profiles").select(
-                "profile_background_url, profile_avatar_url"
-            ).eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
-            
-            bg_url = profile_response.data[0].get('profile_background_url') if profile_response.data else None
-            avatar_url = profile_response.data[0].get('profile_avatar_url') if profile_response.data else None
-            
-            settings_response = self.bot.supabase_client.table("server_configurations").select("settings").eq("server_guild_id", self.guild_id).execute()
-            gamification_settings = {}
-            if settings_response.data and len(settings_response.data) > 0:
-                gamification_settings = settings_response.data[0].get('settings', {}).get('gamification_xp', {})
-            coin_image_url = gamification_settings.get('coin_image_url')
-            
-            is_animated = is_gif_url(bg_url) or is_gif_url(avatar_url)
-            
-            if is_animated:
-                image_buffer = create_animated_profile_gif(
-                    user_avatar_url=self.target_user.display_avatar.url,
-                    custom_avatar_url=avatar_url,
-                    user_name=self.target_user.display_name,
-                    current_level=1,
-                    current_xp_in_level=0,
-                    xp_for_level_up=300,
-                    points_name=self.points_name,
-                    total_xp=0,
-                    background_url=bg_url,
-                    profile_bio=self.bio.value,
-                    coin_image_url=coin_image_url
-                )
-                filename = "profile_card.gif"
-            else:
-                image_buffer = await create_rank_card(
-                    user_avatar_url=self.target_user.display_avatar.url,
-                    user_name=self.target_user.display_name,
-                    current_level=1,
-                    current_xp_in_level=0,
-                    xp_for_level_up=300,
-                    points_name=self.points_name,
-                    total_xp=0,
-                    profile_bio=self.bio.value,
-                    coin_image_url=coin_image_url
-                )
-                filename = "profile_card.png"
-            
-            embed = Embed(title=f"📊 Bio de {self.target_user.display_name}", color=discord.Color.blurple())
-            embed.set_image(url=f"attachment://{filename}")
-            
-            view = ProfileView(self.bot, self.target_user, self.guild_id, self.points_name)
-            await interaction.response.send_message(embed=embed, file=File(image_buffer, filename=filename), view=view, ephemeral=True)
-        except Exception as e:
-            logging.error(f"Erro ao salvar bio: {e}")
-            await interaction.response.send_message("Erro ao salvar bio.", ephemeral=True)
 
 
 class ItemNavigatorView(ui.View):
@@ -1078,11 +722,9 @@ class ItemNavigatorView(ui.View):
         preview_buffer = await self.parent_view.get_preview(self.target_user, preview_url, avatar_url)
         
         if preview_buffer:
-            is_anim = is_gif_url(item_url)
-            filename = "profile_card.gif" if is_anim else "profile_card.png"
             embed = Embed(title=f"📊 {item.get('item_name', 'Item')}", color=discord.Color.blurple())
-            embed.set_image(url=f"attachment://{filename}")
-            await interaction.response.edit_message(embed=embed, attachments=[File(preview_buffer, filename=filename)], view=self)
+            embed.set_image(url="attachment://profile_card.png")
+            await interaction.response.edit_message(embed=embed, attachments=[File(preview_buffer, filename="profile_card.png")], view=self)
         else:
             await interaction.response.defer()
     
@@ -1103,11 +745,9 @@ class ItemNavigatorView(ui.View):
         preview_buffer = await self.parent_view.get_preview(self.target_user, preview_url, avatar_url)
         
         if preview_buffer:
-            is_anim = is_gif_url(item_url)
-            filename = "profile_card.gif" if is_anim else "profile_card.png"
             embed = Embed(title=f"📊 {item.get('item_name', 'Item')}", color=discord.Color.blurple())
-            embed.set_image(url=f"attachment://{filename}")
-            await interaction.response.edit_message(embed=embed, attachments=[File(preview_buffer, filename=filename)], view=self)
+            embed.set_image(url="attachment://profile_card.png")
+            await interaction.response.edit_message(embed=embed, attachments=[File(preview_buffer, filename="profile_card.png")], view=self)
         else:
             await interaction.response.defer()
     
@@ -1128,13 +768,11 @@ class ItemNavigatorView(ui.View):
             image_buffer = await self.parent_view.update_profile(interaction)
             
             if image_buffer:
-                is_anim = is_gif_url(item_url)
-                filename = "profile_card.gif" if is_anim else "profile_card.png"
                 embed = Embed(title=f"📊 Perfil de {self.target_user.display_name}", color=discord.Color.blurple())
-                embed.set_image(url=f"attachment://{filename}")
+                embed.set_image(url="attachment://profile_card.png")
                 
                 new_view = ProfileView(self.bot, self.target_user, self.guild_id, self.parent_view.points_name)
-                await interaction.response.edit_message(embed=embed, attachments=[File(image_buffer, filename=filename)], view=new_view)
+                await interaction.response.edit_message(embed=embed, attachments=[File(image_buffer, filename="profile_card.png")], view=new_view)
             
             await interaction.followup.send(f"✅ **{item.get('item_name')}** equipado!", ephemeral=True)
             
@@ -1164,11 +802,10 @@ class PerfilCommand(commands.Cog):
                 gamification_settings = settings_response.data[0].get('settings', {}).get('gamification_xp', {})
             
             points_name = gamification_settings.get('points_name', 'XP')
-            coin_image_url = gamification_settings.get('coin_image_url')
             xp_per_level_base = int(gamification_settings.get('xp_per_level_base', 300)) or 300
             
             profile_response = self.bot.supabase_client.table("gamification_profiles").select(
-                "xp, profile_background_url, profile_avatar_url, message_count, profile_bio, is_private"
+                "xp, profile_background_url, profile_avatar_url, message_count"
             ).eq("user_id", target_user.id).eq("guild_id", guild_id).execute()
             
             if not profile_response.data:
@@ -1179,8 +816,6 @@ class PerfilCommand(commands.Cog):
             message_count = profile_data.get('message_count', 0)
             background_url = profile_data.get('profile_background_url')
             avatar_url = profile_data.get('profile_avatar_url')
-            profile_bio = profile_data.get('profile_bio', '')
-            is_private = profile_data.get('is_private', False)
             
             calculated_level = total_xp // xp_per_level_base
             xp_at_start_of_level = calculated_level * xp_per_level_base
@@ -1208,82 +843,42 @@ class PerfilCommand(commands.Cog):
             global xp_for_level_base
             xp_for_level_base = xp_per_level_base
             
-            viewing_user = interaction.user
-            is_owner = target_user.id == viewing_user.id
-            is_admin = viewing_user.guild_permissions.administrator
-            
-            if is_private and not is_owner and not is_admin:
-                embed = Embed(
-                    title=f"🔒 Perfil de {target_user.display_name}",
-                    description="Este perfil é **privado**.\n\nApenas o próprio usuário e administradores podem ver os detalhes.",
-                    color=discord.Color.red()
-                )
-                embed.set_thumbnail(url=target_user.display_avatar.url)
-                return await interaction.followup.send(embed=embed, ephemeral=True)
-            
-            is_animated = is_gif_url(background_url) or is_gif_url(avatar_url)
-            
-            if is_animated:
-                image_buffer = create_animated_profile_gif(
-                    user_avatar_url=target_user.display_avatar.url,
-                    custom_avatar_url=avatar_url,
-                    user_name=target_user.display_name,
-                    current_level=calculated_level,
-                    current_xp_in_level=xp_in_this_level,
-                    xp_for_level_up=total_xp_for_this_level_up,
-                    points_name=points_name,
-                    total_xp=total_xp,
-                    background_url=background_url,
-                    message_count=message_count,
-                    days_in_server=days_in_server,
-                    rank_position=rank_position,
-                    total_members=total_members,
-                    equipped_background=background_url,
-                    equipped_avatar=avatar_url,
-                    profile_bio=profile_bio,
-                    coin_image_url=coin_image_url
-                )
-                filename = "profile_card.gif"
-            else:
-                image_buffer = await create_rank_card(
-                    user_avatar_url=target_user.display_avatar.url,
-                    custom_avatar_url=avatar_url,
-                    user_name=target_user.display_name,
-                    current_level=calculated_level,
-                    current_xp_in_level=xp_in_this_level,
-                    xp_for_level_up=total_xp_for_this_level_up,
-                    points_name=points_name,
-                    total_xp=total_xp,
-                    background_url=background_url,
-                    message_count=message_count,
-                    days_in_server=days_in_server,
-                    rank_position=rank_position,
-                    total_members=total_members,
-                    inventory_items=inventory_items,
-                    equipped_background=background_url,
-                    equipped_avatar=avatar_url,
-                    profile_bio=profile_bio,
-                    coin_image_url=coin_image_url
-                )
-                filename = "profile_card.png"
+            image_buffer = await create_rank_card(
+                user_avatar_url=target_user.display_avatar.url,
+                custom_avatar_url=avatar_url,
+                user_name=target_user.display_name,
+                current_level=calculated_level,
+                current_xp_in_level=xp_in_this_level,
+                xp_for_level_up=total_xp_for_this_level_up,
+                points_name=points_name,
+                total_xp=total_xp,
+                background_url=background_url,
+                message_count=message_count,
+                days_in_server=days_in_server,
+                rank_position=rank_position,
+                total_members=total_members,
+                inventory_items=inventory_items,
+                equipped_background=background_url,
+                equipped_avatar=avatar_url
+            )
             
             embed = Embed(
                 title=f"📊 Perfil de {target_user.display_name}",
                 color=discord.Color.blurple()
             )
-            embed.set_image(url=f"attachment://{filename}")
+            embed.set_image(url="attachment://profile_card.png")
             
             if target_user.id == interaction.user.id:
                 view = ProfileView(self.bot, target_user, guild_id, points_name)
                 await interaction.followup.send(
                     embed=embed,
-                    file=File(image_buffer, filename=filename),
+                    file=File(image_buffer, filename="profile_card.png"),
                     view=view
                 )
             else:
                 await interaction.followup.send(
                     embed=embed,
-                    file=File(image_buffer, filename=filename)
+                    file=File(image_buffer, filename="profile_card.png")
                 )
             
         except Exception as e:
