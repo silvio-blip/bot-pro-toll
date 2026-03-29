@@ -157,9 +157,12 @@ O comando `/perfil` mostra o cartão personalizado do usuário com:
 - Fundo customizavel
 - Avatar customizavel
 - Bio (Sobre mim)
+- Likes (curtidas de outros membros)
 - Privacidade (perfil público ou privado)
 
 ### Botões do Perfil
+
+**Para o Dono do Perfil:**
 | Botão | O que faz |
 |-------|-----------|
 | **Fundo** | Seleciona um fundo do seu inventario |
@@ -167,10 +170,21 @@ O comando `/perfil` mostra o cartão personalizado do usuário com:
 | **Bio** | Edita sua biografia (ate 60 caracteres) |
 | **Privado** | Alterna entre perfil público e privado |
 
+**Para Outros Usuários:**
+| Botão | O que faz |
+|-------|-----------|
+| **❤️ Like** | Dá ou remove like do perfil |
+
 ### Como usar a Bio
 1. Clique no botão **Bio** no seu perfil
 2. Escreva algo sobre você
 3. Salve e pronto!
+
+### Sistema de Likes
+- Qualquer membro pode dar like em outros perfis
+- O número de likes aparece no cartão de perfil
+- Você pode remover seu like a qualquer momento
+- Não é possível dar like no próprio perfil
 
 ### Perfil Privado
 - Quando ativo, apenas admins podem ver os detalhes do perfil

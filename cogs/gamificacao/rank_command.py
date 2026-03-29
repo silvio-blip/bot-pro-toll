@@ -175,7 +175,8 @@ async def create_rank_card(
     equipped_avatar: str = None,
     profile_bio: str = '',
     coin_image_url: str = None,
-    titles: list = None
+    titles: list = None,
+    likes_count: int = 0
 ) -> BytesIO:
     """Gera uma imagem de cartão de perfil moderno e bonito"""
     
@@ -336,6 +337,14 @@ async def create_rank_card(
     
     draw.text((stats_x3 + 12 * scale_factor, stats_y + 45 * scale_factor), f"{total_xp:,}", font=stat_value_font, fill=(255, 215, 0))
     
+    # Card 4 - Likes (ao lado do card de XP/Moedas)
+    stats_x4 = stats_x3 + stat_card_width_large + card_spacing
+    stat_card_width_likes = 200 * scale_factor
+    stats_container4 = create_stats_card(stat_card_width_likes, 100 * scale_factor, 10 * scale_factor)
+    card.paste(stats_container4, (stats_x4, stats_y), stats_container4)
+    draw.text((stats_x4 + 20 * scale_factor, stats_y + 10 * scale_factor), "LIKES", font=stat_label_font, fill=(255, 100, 150))
+    draw.text((stats_x4 + 20 * scale_factor, stats_y + 45 * scale_factor), f"{likes_count}", font=stat_value_font, fill=(255, 255, 255))
+    
     # ========== BIO (texto ao lado direito do nome) ==========
     if profile_bio:
         bio_x = 550 * scale_factor
@@ -491,7 +500,7 @@ xp_for_level_base = 300
 class ProfileView(ui.View):
     """View interativa para o perfil com seleção de categoria"""
     
-    def __init__(self, bot: commands.Bot, target_user, guild_id: int, points_name: str, message=None, is_private: bool = None):
+    def __init__(self, bot: commands.Bot, target_user, guild_id: int, points_name: str, message=None, is_private: bool = None, current_user=None):
         super().__init__(timeout=180)
         self.bot = bot
         self.target_user = target_user
@@ -502,6 +511,7 @@ class ProfileView(ui.View):
         self.avatares = []
         self.current_fundo_index = 0
         self.current_avatar_index = 0
+        self.current_user = current_user
         
         profile_resp = bot.supabase_client.table("gamification_profiles").select("is_private").eq("user_id", target_user.id).eq("guild_id", guild_id).execute()
         self.is_private = profile_resp.data[0].get('is_private', False) if profile_resp.data else False
@@ -536,10 +546,38 @@ class ProfileView(ui.View):
         btn_bio.callback = btn_bio_callback
         btn_privado.callback = btn_privado_callback
         
-        self.add_item(btn_fundo)
-        self.add_item(btn_avatar)
-        self.add_item(btn_bio)
-        self.add_item(btn_privado)
+        if not current_user or current_user.id == target_user.id:
+            self.add_item(btn_fundo)
+            self.add_item(btn_avatar)
+            self.add_item(btn_bio)
+            self.add_item(btn_privado)
+        
+        if current_user and current_user.id != target_user.id:
+            try:
+                likes_resp = bot.supabase_client.table("profile_likes").select("id").eq("user_id", target_user.id).eq("guild_id", guild_id).execute()
+                likes_count = len(likes_resp.data) if likes_resp.data else 0
+                
+                user_liked = False
+                if likes_resp.data:
+                    for like in likes_resp.data:
+                        if like.get('liked_by') == current_user.id:
+                            user_liked = True
+                            break
+                
+                btn_like = ui.Button(
+                    label=f"❤️ {likes_count}",
+                    style=discord.ButtonStyle.danger if user_liked else discord.ButtonStyle.primary,
+                    custom_id="dar_like",
+                    row=1
+                )
+                
+                async def btn_like_callback(interaction: Interaction):
+                    await self.dar_like(interaction, btn_like)
+                
+                btn_like.callback = btn_like_callback
+                self.add_item(btn_like)
+            except Exception as e:
+                logging.error(f"Erro ao carregar likes: {e}")
     
     def _load_items(self):
         try:
@@ -633,6 +671,9 @@ class ProfileView(ui.View):
             inventory_response = self.bot.supabase_client.table("user_inventories").select("*").eq("guild_id", self.guild_id).eq("user_id", target_user.id).execute()
             inventory_items = inventory_response.data if inventory_response.data else []
             
+            likes_resp = self.bot.supabase_client.table("profile_likes").select("id").eq("user_id", target_user.id).eq("guild_id", self.guild_id).execute()
+            likes_count = len(likes_resp.data) if likes_resp.data else 0
+            
             image_buffer = await create_rank_card(
                 user_avatar_url=target_user.display_avatar.url,
                 custom_avatar_url=avatar_url,
@@ -652,7 +693,8 @@ class ProfileView(ui.View):
                 equipped_avatar=avatar_url,
                 profile_bio=profile_bio,
                 coin_image_url=coin_image_url,
-                titles=titles
+                titles=titles,
+                likes_count=likes_count
             )
             
             return image_buffer
@@ -660,7 +702,131 @@ class ProfileView(ui.View):
             logging.error(f"Erro ao gerar preview: {e}")
             return None
     
+    async def dar_like(self, interaction: Interaction, button: ui.Button):
+        try:
+            liker_id = interaction.user.id
+            target_id = self.target_user.id
+            guild_id = self.guild_id
+            
+            if liker_id == target_id:
+                await interaction.response.send_message("❌ Você não pode dar like no seu próprio perfil!", ephemeral=True)
+                return
+            
+            await interaction.response.defer()
+            
+            try:
+                existing = self.bot.supabase_client.table("profile_likes").select("id").eq("user_id", target_id).eq("guild_id", guild_id).eq("liked_by", liker_id).execute()
+                
+                if existing.data:
+                    self.bot.supabase_client.table("profile_likes").delete().eq("user_id", target_id).eq("guild_id", guild_id).eq("liked_by", liker_id).execute()
+                    await interaction.followup.send("💔 Você removeu seu like!", ephemeral=True)
+                else:
+                    self.bot.supabase_client.table("profile_likes").insert({
+                        "user_id": target_id,
+                        "guild_id": guild_id,
+                        "liked_by": liker_id
+                    }).execute()
+                    await interaction.followup.send("❤️ Você deu like no perfil!", ephemeral=True)
+            except Exception as e:
+                logging.error(f"Erro no banco de likes: {e}")
+                await interaction.followup.send("❌ Erro ao processar like.", ephemeral=True)
+                return
+            
+            likes_resp = self.bot.supabase_client.table("profile_likes").select("id").eq("user_id", target_id).eq("guild_id", guild_id).execute()
+            likes_count = len(likes_resp.data) if likes_resp.data else 0
+            
+            for child in self.children:
+                if isinstance(child, ui.Button) and child.custom_id == "dar_like":
+                    child.label = f"❤️ {likes_count}"
+                    break
+            
+            settings_response = self.bot.supabase_client.table("server_configurations").select("settings").eq("server_guild_id", guild_id).execute()
+            gamification_settings = {}
+            if settings_response.data and len(settings_response.data) > 0:
+                gamification_settings = settings_response.data[0].get('settings', {}).get('gamification_xp', {})
+            
+            points_name = gamification_settings.get('points_name', 'XP')
+            xp_per_level_base = int(gamification_settings.get('xp_per_level_base', 300)) or 300
+            
+            profile_response = self.bot.supabase_client.table("gamification_profiles").select(
+                "xp, profile_background_url, profile_avatar_url, message_count, profile_bio"
+            ).eq("user_id", target_id).eq("guild_id", guild_id).execute()
+            
+            if not profile_response.data:
+                await interaction.response.edit_message(view=self)
+                return
+            
+            profile_data = profile_response.data[0]
+            total_xp = profile_data.get('xp', 0)
+            message_count = profile_data.get('message_count', 0)
+            bg_url = profile_data.get('profile_background_url')
+            avatar_url = profile_data.get('profile_avatar_url')
+            profile_bio = profile_data.get('profile_bio', '')
+            
+            calculated_level = total_xp // xp_per_level_base
+            xp_at_start_of_level = calculated_level * xp_per_level_base
+            xp_for_next_level_total = (calculated_level + 1) * xp_per_level_base
+            xp_in_this_level = total_xp - xp_at_start_of_level
+            total_xp_for_this_level_up = xp_for_next_level_total - xp_at_start_of_level
+            
+            days_in_server = 0
+            if self.target_user.joined_at:
+                delta = datetime.utcnow() - self.target_user.joined_at.replace(tzinfo=None)
+                days_in_server = delta.days
+            
+            all_profiles = self.bot.supabase_client.table("gamification_profiles").select("user_id", "xp").eq("guild_id", guild_id).order("xp", desc=True).execute()
+            total_members = len(all_profiles.data) if all_profiles.data else 0
+            rank_position = 1
+            if all_profiles.data:
+                for p in all_profiles.data:
+                    if p['user_id'] == target_id:
+                        break
+                    rank_position += 1
+            
+            inventory_response = self.bot.supabase_client.table("user_inventories").select("*").eq("guild_id", guild_id).eq("user_id", target_id).execute()
+            inventory_items = inventory_response.data if inventory_response.data else []
+            
+            titles = gamification_settings.get('titles', [])
+            coin_image_url = gamification_settings.get('coin_image_url')
+            
+            image_buffer = await create_rank_card(
+                user_avatar_url=self.target_user.display_avatar.url,
+                custom_avatar_url=avatar_url,
+                user_name=self.target_user.display_name,
+                current_level=calculated_level,
+                current_xp_in_level=xp_in_this_level,
+                xp_for_level_up=total_xp_for_this_level_up,
+                points_name=points_name,
+                total_xp=total_xp,
+                background_url=bg_url,
+                message_count=message_count,
+                days_in_server=days_in_server,
+                rank_position=rank_position,
+                total_members=total_members,
+                inventory_items=inventory_items,
+                equipped_background=bg_url,
+                equipped_avatar=avatar_url,
+                profile_bio=profile_bio,
+                coin_image_url=coin_image_url,
+                titles=titles,
+                likes_count=likes_count
+            )
+            
+            embed = Embed(title=f"📊 Perfil de {self.target_user.display_name}", color=discord.Color.blurple())
+            embed.set_image(url="attachment://profile_card.png")
+            
+            await interaction.edit_original_response(embed=embed, attachments=[File(image_buffer, filename="profile_card.png")], view=self)
+            
+        except Exception as e:
+            logging.error(f"Erro ao dar like: {e}")
+            try:
+                await interaction.followup.send("❌ Erro ao processar like.", ephemeral=True)
+            except:
+                pass
+    
     async def interaction_check(self, interaction: Interaction) -> bool:
+        if hasattr(interaction, 'data') and interaction.data.get('custom_id') == 'dar_like':
+            return True
         if interaction.user.id != self.target_user.id:
             await interaction.response.send_message("Este perfil não é seu!", ephemeral=True)
             return False
@@ -729,6 +895,9 @@ class ProfileView(ui.View):
             inventory_response = self.bot.supabase_client.table("user_inventories").select("*").eq("guild_id", self.guild_id).eq("user_id", self.target_user.id).execute()
             inventory_items = inventory_response.data if inventory_response.data else []
             
+            likes_resp = self.bot.supabase_client.table("profile_likes").select("id").eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
+            likes_count = len(likes_resp.data) if likes_resp.data else 0
+            
             image_buffer = await create_rank_card(
                 user_avatar_url=self.target_user.display_avatar.url,
                 custom_avatar_url=avatar_url,
@@ -748,7 +917,8 @@ class ProfileView(ui.View):
                 equipped_avatar=avatar_url,
                 profile_bio=profile_bio,
                 coin_image_url=coin_image_url,
-                titles=titles
+                titles=titles,
+                likes_count=likes_count
             )
             
             return image_buffer
@@ -841,8 +1011,10 @@ class BioModal(ui.Modal):
         self.points_name = points_name
         
         profile_response = bot.supabase_client.table("gamification_profiles").select("profile_bio").eq("user_id", target_user.id).eq("guild_id", guild_id).execute()
-        current_bio = profile_response.data[0].get('profile_bio', '') if profile_response.data else ''
-        current_bio = current_bio.replace('\n', ' ').replace('\r', '')
+        current_bio = ''
+        if profile_response.data:
+            current_bio = profile_response.data[0].get('profile_bio') or ''
+        current_bio = str(current_bio).replace('\n', ' ').replace('\r', '')
         
         self.bio = ui.TextInput(label="Sua Bio", style=TextStyle.short, default=current_bio, placeholder="Escreva algo sobre você...", max_length=100, required=False)
         self.add_item(self.bio)
@@ -889,7 +1061,8 @@ class BioModal(ui.Modal):
                 background_url=bg_url,
                 profile_bio=bio_text,
                 coin_image_url=coin_image_url,
-                titles=titles
+                titles=titles,
+                likes_count=0
             )
             filename = "profile_card.png"
             
@@ -899,7 +1072,7 @@ class BioModal(ui.Modal):
             profile_resp = self.bot.supabase_client.table("gamification_profiles").select("is_private").eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
             is_private = profile_resp.data[0].get('is_private', False) if profile_resp.data else False
             
-            view = ProfileView(self.bot, self.target_user, self.guild_id, self.points_name, is_private=is_private)
+            view = ProfileView(self.bot, self.target_user, self.guild_id, self.points_name, is_private=is_private, current_user=interaction.user)
             await interaction.response.send_message(embed=embed, file=File(image_buffer, filename=filename), view=view, ephemeral=True)
         except Exception as e:
             logging.error(f"Erro ao salvar bio: {e}")
@@ -1028,7 +1201,7 @@ class ItemNavigatorView(ui.View):
                 profile_resp = self.bot.supabase_client.table("gamification_profiles").select("is_private").eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
                 is_private = profile_resp.data[0].get('is_private', False) if profile_resp.data else False
                 
-                new_view = ProfileView(self.bot, self.target_user, self.guild_id, self.parent_view.points_name, is_private=is_private)
+                new_view = ProfileView(self.bot, self.target_user, self.guild_id, self.parent_view.points_name, is_private=is_private, current_user=getattr(self.parent_view, 'current_user', None))
                 await interaction.response.edit_message(embed=embed, attachments=[File(image_buffer, filename="profile_card.png")], view=new_view)
             
             await interaction.followup.send(f"✅ **{item.get('item_name')}** equipado!", ephemeral=True)
@@ -1105,6 +1278,9 @@ class PerfilCommand(commands.Cog):
             inventory_response = self.bot.supabase_client.table("user_inventories").select("*").eq("guild_id", guild_id).eq("user_id", target_user.id).execute()
             inventory_items = inventory_response.data if inventory_response.data else []
             
+            likes_resp = self.bot.supabase_client.table("profile_likes").select("id").eq("user_id", target_user.id).eq("guild_id", guild_id).execute()
+            likes_count = len(likes_resp.data) if likes_resp.data else 0
+            
             global xp_for_level_base
             xp_for_level_base = xp_per_level_base
             
@@ -1127,7 +1303,8 @@ class PerfilCommand(commands.Cog):
                 equipped_avatar=avatar_url,
                 profile_bio=profile_bio,
                 coin_image_url=coin_image_url,
-                titles=titles
+                titles=titles,
+                likes_count=likes_count
             )
             
             embed = Embed(
@@ -1136,20 +1313,13 @@ class PerfilCommand(commands.Cog):
             )
             embed.set_image(url="attachment://profile_card.png")
             
-            if target_user.id == interaction.user.id:
-                view = ProfileView(self.bot, target_user, guild_id, points_name, is_private=is_private)
-                await interaction.followup.send(
-                    embed=embed,
-                    file=File(image_buffer, filename="profile_card.png"),
-                    view=view,
-                    ephemeral=True
-                )
-            else:
-                await interaction.followup.send(
-                    embed=embed,
-                    file=File(image_buffer, filename="profile_card.png"),
-                    ephemeral=True
-                )
+            view = ProfileView(self.bot, target_user, guild_id, points_name, is_private=is_private, current_user=interaction.user)
+            await interaction.followup.send(
+                embed=embed,
+                file=File(image_buffer, filename="profile_card.png"),
+                view=view,
+                ephemeral=True
+            )
             
         except Exception as e:
             import traceback

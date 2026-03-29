@@ -158,6 +158,27 @@ CREATE TABLE public.tickets (
 
 ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
 """)
+    
+    # Verificar tabela de likes de perfil
+    try:
+        supabase_client.table('profile_likes').select('id').limit(1).execute()
+        logging.info("[✅] Tabela 'profile_likes' verificada com sucesso.")
+    except Exception as e:
+        logging.warning("[⚠️] Tabela 'profile_likes' não encontrada. Sistema de likes pode não funcionar.")
+        logging.warning("[💡] Para criar a tabela, execute no Supabase SQL Editor:")
+        logging.warning("""
+CREATE TABLE public.profile_likes (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    guild_id BIGINT NOT NULL,
+    liked_by BIGINT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.profile_likes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all" ON public.profile_likes FOR ALL USING (true) WITH CHECK (true);
+GRANT ALL ON public.profile_likes TO anon, authenticated;
+""")
 except Exception as e:
     logging.error(f"[❌] Falha ao inicializar ou conectar com o Supabase. Verifique a tabela 'gamification_profiles'. Erro: {e}")
     exit()
