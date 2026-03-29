@@ -582,24 +582,9 @@ class ProfileView(ui.View):
         except:
             return None
     
-    async def interaction_check(self, interaction: Interaction) -> bool:
-        if interaction.user.id != self.target_user.id:
-            await interaction.response.send_message("Este perfil não é seu!", ephemeral=True)
-            return False
-        return True
-    
-    async def update_profile(self, interaction: Interaction):
-        """Atualiza o perfil com novos dados"""
+    async def get_preview(self, target_user, preview_background_url=None, preview_avatar_url=None):
+        """Gera uma prévia do perfil com fundo/avatar especificados"""
         try:
-            profile_response = self.bot.supabase_client.table("gamification_profiles").select(
-                "xp, profile_background_url, profile_avatar_url, message_count, profile_bio, is_private"
-            ).eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
-            
-            if not profile_response.data:
-                return None
-            
-            profile_data = profile_response.data[0]
-            
             settings_response = self.bot.supabase_client.table("server_configurations").select("settings").eq("server_guild_id", self.guild_id).execute()
             gamification_settings = {}
             if settings_response.data and len(settings_response.data) > 0:
@@ -611,8 +596,8 @@ class ProfileView(ui.View):
             titles = gamification_settings.get('titles', [])
             
             profile_response = self.bot.supabase_client.table("gamification_profiles").select(
-                "xp, profile_background_url, profile_avatar_url, message_count, profile_bio, is_private"
-            ).eq("user_id", target_user.id).eq("guild_id", self.guild_id).execute()
+                "xp, profile_background_url, profile_avatar_url, message_count, profile_bio"
+            ).eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
             
             if not profile_response.data:
                 return None
@@ -621,12 +606,9 @@ class ProfileView(ui.View):
             total_xp = profile_data.get('xp', 0)
             message_count = profile_data.get('message_count', 0)
             
-            current_background = profile_data.get('profile_background_url')
-            current_avatar = profile_data.get('profile_avatar_url')
+            bg_url = preview_background_url if preview_background_url else profile_data.get('profile_background_url')
+            avatar_url = preview_avatar_url if preview_avatar_url else profile_data.get('profile_avatar_url')
             profile_bio = profile_data.get('profile_bio', '')
-            
-            bg_url = preview_background_url if preview_background_url else current_background
-            avatar_url = preview_avatar_url if preview_avatar_url else current_avatar
             
             calculated_level = total_xp // xp_per_level_base
             xp_at_start_of_level = calculated_level * xp_per_level_base
@@ -676,6 +658,102 @@ class ProfileView(ui.View):
             return image_buffer
         except Exception as e:
             logging.error(f"Erro ao gerar preview: {e}")
+            return None
+    
+    async def interaction_check(self, interaction: Interaction) -> bool:
+        if interaction.user.id != self.target_user.id:
+            await interaction.response.send_message("Este perfil não é seu!", ephemeral=True)
+            return False
+        return True
+    
+    async def update_profile(self, interaction: Interaction):
+        """Atualiza o perfil com novos dados"""
+        try:
+            profile_response = self.bot.supabase_client.table("gamification_profiles").select(
+                "xp, profile_background_url, profile_avatar_url, message_count, profile_bio, is_private"
+            ).eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
+            
+            if not profile_response.data:
+                return None
+            
+            profile_data = profile_response.data[0]
+            
+            settings_response = self.bot.supabase_client.table("server_configurations").select("settings").eq("server_guild_id", self.guild_id).execute()
+            gamification_settings = {}
+            if settings_response.data and len(settings_response.data) > 0:
+                gamification_settings = settings_response.data[0].get('settings', {}).get('gamification_xp', {})
+            
+            points_name = gamification_settings.get('points_name', 'XP')
+            xp_per_level_base = int(gamification_settings.get('xp_per_level_base', 300)) or 300
+            coin_image_url = gamification_settings.get('coin_image_url')
+            titles = gamification_settings.get('titles', [])
+            
+            profile_response = self.bot.supabase_client.table("gamification_profiles").select(
+                "xp, profile_background_url, profile_avatar_url, message_count, profile_bio, is_private"
+            ).eq("user_id", self.target_user.id).eq("guild_id", self.guild_id).execute()
+            
+            if not profile_response.data:
+                return None
+            
+            profile_data = profile_response.data[0]
+            total_xp = profile_data.get('xp', 0)
+            message_count = profile_data.get('message_count', 0)
+            
+            current_background = profile_data.get('profile_background_url')
+            current_avatar = profile_data.get('profile_avatar_url')
+            profile_bio = profile_data.get('profile_bio', '')
+            
+            bg_url = current_background
+            avatar_url = current_avatar
+            
+            calculated_level = total_xp // xp_per_level_base
+            xp_at_start_of_level = calculated_level * xp_per_level_base
+            xp_for_next_level_total = (calculated_level + 1) * xp_per_level_base
+            xp_in_this_level = total_xp - xp_at_start_of_level
+            total_xp_for_this_level_up = xp_for_next_level_total - xp_at_start_of_level
+            
+            days_in_server = 0
+            if self.target_user.joined_at:
+                delta = datetime.utcnow() - self.target_user.joined_at.replace(tzinfo=None)
+                days_in_server = delta.days
+            
+            all_profiles = self.bot.supabase_client.table("gamification_profiles").select("user_id", "xp").eq("guild_id", self.guild_id).order("xp", desc=True).execute()
+            total_members = len(all_profiles.data) if all_profiles.data else 0
+            rank_position = 1
+            if all_profiles.data:
+                for p in all_profiles.data:
+                    if p['user_id'] == self.target_user.id:
+                        break
+                    rank_position += 1
+            
+            inventory_response = self.bot.supabase_client.table("user_inventories").select("*").eq("guild_id", self.guild_id).eq("user_id", self.target_user.id).execute()
+            inventory_items = inventory_response.data if inventory_response.data else []
+            
+            image_buffer = await create_rank_card(
+                user_avatar_url=self.target_user.display_avatar.url,
+                custom_avatar_url=avatar_url,
+                user_name=self.target_user.display_name,
+                current_level=calculated_level,
+                current_xp_in_level=xp_in_this_level,
+                xp_for_level_up=total_xp_for_this_level_up,
+                points_name=points_name,
+                total_xp=total_xp,
+                background_url=bg_url,
+                message_count=message_count,
+                days_in_server=days_in_server,
+                rank_position=rank_position,
+                total_members=total_members,
+                inventory_items=inventory_items,
+                equipped_background=bg_url,
+                equipped_avatar=avatar_url,
+                profile_bio=profile_bio,
+                coin_image_url=coin_image_url,
+                titles=titles
+            )
+            
+            return image_buffer
+        except Exception as e:
+            logging.error(f"Erro ao atualizar perfil: {e}")
             return None
     
     async def selecionar_fundo(self, interaction: Interaction, button: ui.Button):
