@@ -17,6 +17,7 @@ Este é um bot completo para Discord com várias funcionalidades:
 | **Utilidades** | Remover fundo de imagens, ping, gráficos |
 | **Suporte** | Sistema de tickets e hub de suporte |
 | **Denúncias** | Sistema de denúncias de usuários |
+| **Música** | Player de música com fila, funk aleatório |
 
 ---
 
@@ -124,6 +125,21 @@ Antes de tudo, o administrador precisa registrar o servidor:
 
 ---
 
+### Comandos de Música
+
+| Comando | Descrição |
+|---------|-----------|
+| `/play` | 🎵 Toca uma música (busca ou URL) |
+| `/queue` | 📋 Mostra a fila de músicas |
+| `/skip` | ⏭️ Pula para próxima música |
+| `/pause` | ⏸️ Pausa a música atual |
+| `/resume` | ▶️ Continua a música pausada |
+| `/stop` | ⏹️ Para a música e sai do canal |
+| `/clear` | 🗑️ Limpa a fila de músicas |
+| `/funk` | 🎶 Toca funk aleatório |
+
+---
+
 ### Comandos de Utilidades
 
 | Comando | Descrição |
@@ -212,6 +228,7 @@ O painel tem 6 botões principais:
 | **Social** | Boas-vindas, eventos |
 | **Loja** | Adicionar/editar itens |
 | **Agente IA** | Configurar a IA |
+| **Música** | Configurações do player de música |
 
 ---
 
@@ -373,6 +390,29 @@ A loja tem navegação por botões:
 
 ---
 
+### Música
+
+O sistema de música permite tocar músicas via SoundCloud com fila, controle de DJ e canal dedicado.
+
+#### Configurações do Player
+| Configuração | O que é |
+|--------------|----------|
+| Cargo de DJ | Cargo que permite controlar a música |
+| Canal de Música | Canal onde os comandos funcionam |
+
+#### Como usar:
+1. Configure o cargo de DJ e o canal no `/painel` → Música
+2. Use `/play` + nome da música ou URL
+3. Use `/funk` para tocar funk aleatório
+4. Use `/queue` para ver a fila
+5. Use `/skip`, `/pause`, `/resume`, `/stop` para controlar
+
+#### Regras de permissão:
+- Se **canal configurado**: comandos só funcionam nesse canal
+- Se **cargo de DJ configurado**: só DJ ou quem pediu pode controlar
+
+---
+
 ## Sistemas Automáticos
 
 O bot faz coisas automaticamente, sem precisar de comandos:
@@ -525,5 +565,5 @@ Uso diario:
 - **Linguagem:** Python
 - **Biblioteca:** discord.py
 - **Banco de Dados:** Supabase (PostgreSQL)
-- **Total de Comandos:** 37
-- **Total de Cogs:** 34
+- **Total de Comandos:** 45
+- **Total de Cogs:** 35
