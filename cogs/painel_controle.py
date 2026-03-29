@@ -930,6 +930,64 @@ class TicketsSettingsView(ui.View):
         self.add_item(TicketsSelect(bot))
         self.add_item(BackButton(bot, row=1))
 
+
+class MusicConfigModal(ui.Modal, title="Configuração de Música"):
+    def __init__(self, bot, config: dict):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.config = config
+        self.add_item(ui.TextInput(label="ID do Cargo de DJ", default=str(config.get("dj_role_id", "")), placeholder="ID numérico do cargo de DJ"))
+        self.add_item(ui.TextInput(label="ID do Canal de Música", default=str(config.get("music_channel_id", "")), placeholder="ID do canal onde comandos funcionam (deixe vazio para todos)"))
+
+    async def on_submit(self, i: Interaction):
+        await i.response.defer(ephemeral=True)
+        guild_id = i.guild.id
+        dj_role_id_str = self.children[0].value.strip()
+        music_channel_id_str = self.children[1].value.strip()
+        
+        dj_role_id = int(dj_role_id_str) if dj_role_id_str.isdigit() else None
+        music_channel_id = int(music_channel_id_str) if music_channel_id_str.isdigit() else None
+        
+        if dj_role_id and i.guild.get_role(dj_role_id) is None:
+            return await i.followup.send("O ID do cargo de DJ informado não foi encontrado.", ephemeral=True)
+        
+        if music_channel_id and i.guild.get_channel(music_channel_id) is None:
+            return await i.followup.send("O ID do canal de música informado não foi encontrado.", ephemeral=True)
+        
+        if hasattr(self.bot, 'get_and_update_server_settings'):
+            def update_config(settings: dict):
+                settings.setdefault('music', {})['dj_role_id'] = dj_role_id
+                settings.setdefault('music', {})['music_channel_id'] = music_channel_id
+            
+            success = await self.bot.get_and_update_server_settings(guild_id, update_config)
+            await i.followup.send("✅ Configurações de Música salvas!" if success else "❌ Erro ao salvar.", ephemeral=True)
+        else:
+            await i.followup.send("✅ Configurações salvas (sem persistência).", ephemeral=True)
+
+
+class MusicSelect(ui.Select):
+    def __init__(self, bot):
+        self.bot = bot
+        options = [
+            SelectOption(label="Configurar Música", value="music_config", emoji="🎵")
+        ]
+        super().__init__(placeholder="Escolha uma opção...", options=options)
+    
+    async def callback(self, i: Interaction):
+        choice = self.values[0]
+        if choice == "music_config":
+            config = await get_specific_config(self.bot, i.guild.id, "music")
+            await i.response.send_modal(MusicConfigModal(self.bot, config))
+
+
+class MusicSettingsView(ui.View):
+    def __init__(self, bot):
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.add_item(MusicSelect(bot))
+        self.add_item(BackButton(bot, row=1))
+
+
 class PainelView(ui.View):
     def __init__(self, bot):
         super().__init__(timeout=None)
@@ -962,6 +1020,10 @@ class PainelView(ui.View):
     @ui.button(label="Tickets", emoji="🎫", style=ButtonStyle.secondary, custom_id="painel_tickets_final_v4", row=1)
     async def tickets_button(self, i: Interaction, button: ui.Button):
         await i.response.edit_message(content="🎫 **Tickets** - Configure o sistema de tickets:", embed=None, view=TicketsSettingsView(self.bot))
+
+    @ui.button(label="Música", emoji="🎵", style=ButtonStyle.primary, custom_id="painel_music_final_v4", row=2)
+    async def music_button(self, i: Interaction, button: ui.Button):
+        await i.response.edit_message(content="🎵 **Música** - Configure o sistema de música:", embed=None, view=MusicSettingsView(self.bot))
 
 
 # --- Cog Principal ---

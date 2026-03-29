@@ -65,8 +65,11 @@ root_logger.addHandler(handler)
 # Reduzir verbosidade de bibliotecas
 logging.getLogger('discord.http').setLevel(logging.ERROR)
 logging.getLogger('discord.client').setLevel(logging.ERROR)
+logging.getLogger('discord.voice_state').setLevel(logging.ERROR)
+logging.getLogger('discord.player').setLevel(logging.ERROR)
 logging.getLogger('urllib3').setLevel(logging.ERROR)
 logging.getLogger('asyncio').setLevel(logging.ERROR)
+logging.getLogger('yt_dlp').setLevel(logging.ERROR)
 
 # --- Check de Servidor Registrado ---
 REGISTERED_EXCEPTIONS = {"registrar", "verificar", "ajuda", "ping", "desregistrar-servidor", "mudar-senha"}
@@ -136,29 +139,6 @@ try:
     supabase_client.table('gamification_profiles').select('user_id').limit(1).execute()
     logging.info("[✅] Conexão com o Supabase e tabela de gamificação verificadas com sucesso.")
     
-    # Verificar tabela de tickets
-    try:
-        supabase_client.table('tickets').select('id').limit(1).execute()
-        logging.info("[✅] Tabela 'tickets' verificada com sucesso.")
-    except Exception as e:
-        logging.warning("[⚠️] Tabela 'tickets' não encontrada. Sistema de tickets pode não funcionar.")
-        logging.warning("[💡] Para criar a tabela, execute no Supabase SQL Editor:")
-        logging.warning("""
-CREATE TABLE public.tickets (
-    id TEXT PRIMARY KEY,
-    guild_id BIGINT NOT NULL,
-    user_id BIGINT NOT NULL,
-    user_name TEXT NOT NULL,
-    channel_id BIGINT NOT NULL,
-    category TEXT NOT NULL,
-    description TEXT,
-    status TEXT DEFAULT 'open',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
-""")
-    
     # Verificar tabela de likes de perfil
     try:
         supabase_client.table('profile_likes').select('id').limit(1).execute()
@@ -195,6 +175,10 @@ class MyBot(commands.Bot):
         super().__init__(command_prefix='!', intents=intents)
         self.supabase_client = supabase_client
         self.db_lock = asyncio.Lock()
+        self.queues = {}
+        self.current = {}
+        self.current_dj = {}
+        self.funk_mode = {}
         self.initial_cogs = [
             'cogs.ajuda', 
             'cogs.admin',
@@ -230,7 +214,8 @@ class MyBot(commands.Bot):
             'cogs.embed_command',
             'cogs.ia.agent_ia',
             'cogs.downloads.download_command',
-            'cogs.downloads.auto_download'
+            'cogs.downloads.auto_download',
+            'cogs.musica.musica'
         ]
 
     async def update_xp(self, user: discord.Member, guild: discord.Guild, xp_change: int, is_message: bool = False) -> Optional[int]:
@@ -338,7 +323,8 @@ class MyBot(commands.Bot):
             'cogs.embed_command': '📨',
             'cogs.ia.agent_ia': '🧠',
             'cogs.downloads.download_command': '⬇️',
-            'cogs.downloads.auto_download': '📥'
+            'cogs.downloads.auto_download': '📥',
+            'cogs.musica.musica': '🎵'
         }
         return emoji_map.get(cog_name, '📦')
 
